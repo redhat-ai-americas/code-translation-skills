@@ -154,7 +154,16 @@ def phase5_cutover(project_root, output_dir):
         if "dashboard_file" in dash_data:
             summary["dashboard_file"] = dash_data["dashboard_file"]
 
-    # Step 5: Final security audit + SBOM
+    # Step 5: Final codebase graph for before/after comparison
+    analyze_script = SKILLS_DIR / "universal-code-graph" / "scripts" / "analyze_universal.py"
+    graph_snapshot = run_script(
+        analyze_script, [str(project_root), str(output_dir)],
+        "Final graph snapshot"
+    )
+    results["graph_snapshot"] = graph_snapshot
+    summary["graph_snapshot"] = graph_snapshot.get("status", "unknown")
+
+    # Step 6: Final security audit + SBOM
     security_dir = output_dir / "security"
     security_dir.mkdir(parents=True, exist_ok=True)
     script_path = SKILLS_DIR / "py2to3-security-scanner" / "scripts" / "security_scan.py"
@@ -216,6 +225,11 @@ def phase5_cutover(project_root, output_dir):
             print(f"  Review dashboard: {summary['dashboard_file']}", file=sys.stderr)
     else:
         print(f"\nCutover partial or failed. Review reports for next steps.", file=sys.stderr)
+
+    # Regenerate run status viewer
+    status_script = SKILLS_DIR / "migration-dashboard" / "scripts" / "generate_run_status.py"
+    analysis_dir = output_dir.parent
+    run_script(status_script, [str(analysis_dir)], "Updating run status viewer")
 
     # Output JSON summary
     print(json.dumps(summary, indent=2))

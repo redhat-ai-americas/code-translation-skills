@@ -159,6 +159,15 @@ def phase2_mechanical(project_root, raw_scan_path, output_dir):
     results["security"] = security
     summary["security_scan"] = security.get("status", "unknown")
 
+    # Step 5: Re-analyze codebase for post-mechanical graph snapshot
+    analyze_script = SKILLS_DIR / "universal-code-graph" / "scripts" / "analyze_universal.py"
+    graph_snapshot = run_script(
+        analyze_script, [str(project_root), str(output_dir)],
+        "Post-mechanical graph snapshot"
+    )
+    results["graph_snapshot"] = graph_snapshot
+    summary["graph_snapshot"] = graph_snapshot.get("status", "unknown")
+
     with open(output_dir / "mechanical-summary.json", "w") as f:
         json.dump(summary, f, indent=2)
 
@@ -191,6 +200,11 @@ def phase2_mechanical(project_root, raw_scan_path, output_dir):
         print(f"\nAll Haiku-tier work items completed. Ready for Phase 3 (semantic review)", file=sys.stderr)
     else:
         print(f"\nSome Haiku fixes failed. Review errors before proceeding.", file=sys.stderr)
+
+    # Regenerate run status viewer
+    status_script = SKILLS_DIR / "migration-dashboard" / "scripts" / "generate_run_status.py"
+    analysis_dir = output_dir.parent
+    run_script(status_script, [str(analysis_dir)], "Updating run status viewer")
 
     # Output JSON summary
     print(json.dumps(summary, indent=2))

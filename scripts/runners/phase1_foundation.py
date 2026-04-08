@@ -152,6 +152,11 @@ def phase1_foundation(project_root, raw_scan_path, output_dir):
     print(f"\n  Output files: {list(output_dir.glob('*.json'))}", file=sys.stderr)
     print(f"\nPhase 1 ready for Phase 2 (mechanical fixes)", file=sys.stderr)
 
+    # Regenerate run status viewer
+    status_script = SKILLS_DIR / "migration-dashboard" / "scripts" / "generate_run_status.py"
+    analysis_dir = output_dir.parent
+    run_script(status_script, [str(analysis_dir)], "Updating run status viewer")
+
     # Output JSON summary
     print(json.dumps(summary, indent=2))
 

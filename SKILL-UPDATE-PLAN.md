@@ -557,16 +557,72 @@ Post-migration dashboard answering "Which skills ran? Which were skipped? Is the
 - **Skip categorization**: uses project sizing, workflow type, and scan results to distinguish "expected skip" from "potential gap".
 - **Self-contained HTML**: dark theme, embedded JSON, client-side sorting/filtering, canvas charts — same pattern as migration progress dashboard.
 
-## Next Steps (Remaining Work)
+## Round 9: Run Status Viewer (2026-02-18)
 
-### P2: Additional Tree-sitter Queries
+Browser-viewable run status page with tabbed interface for at-a-glance migration monitoring.
 
-1. `py2_patterns_ts.py` — Tree-sitter queries for all 20+ Python 2 patterns
-2. Query files for Go, Rust, Ruby, C/C++ (3 queries × 5 languages = 15 `.scm` files)
+### Changes Made
 
-### P3: Integration and Polish
+| # | What | Status | Notes |
+|---|------|--------|-------|
+| R9-1 | Created `generate_run_status.py` | COMPLETE | ~580 lines: tabbed HTML viewer with Overview, Timeline, and Logs tabs |
+| R9-2 | Updated migration-dashboard SKILL.md | COMPLETE | Added Run Status Viewer section + Scripts Reference table |
+| R9-3 | Updated SKILL-UPDATE-PLAN.md | COMPLETE | Round 9 |
 
-3. `depends_runner.py` — multilang-depends subprocess integration
-4. Update existing skill scripts with tree-sitter fallback paths
-5. Generalize naming, create target-language template skills
-6. End-to-end integration test of run_express.py on a real Python 2 project
+### Viewer Tabs
+
+1. **Overview** — phase stepper (complete/active/pending), summary cards, gate status badges, reverse-chronological execution list
+2. **Timeline** — canvas Gantt chart of executions, duration-by-skill bar chart
+3. **Logs** — searchable audit log viewer with regex filter and level toggle (All / Errors / Warnings)
+
+### Dashboard Suite Summary
+
+The migration-dashboard skill now has three complementary scripts:
+
+| Script | Focus | When |
+|--------|-------|------|
+| `generate_dashboard.py` | Module progress, risk, gates, costs | During/after migration for stakeholders |
+| `generate_skill_usage_dashboard.py` | Tool coverage, skip analysis | Post-migration for skill suite audit |
+| `generate_run_status.py` | Live run status, timeline, logs | Any time — "open in browser and check" |
+
+## Round 10: Code Graph Visualization + Per-Phase Snapshots (2026-02-18)
+
+Interactive force-directed graph visualization embedded in the run status viewer, with per-phase snapshots showing how the codebase evolves through migration.
+
+### Changes Made
+
+| # | What | Status | Notes |
+|---|------|--------|-------|
+| R10-1 | Added Graph tab to `generate_run_status.py` | COMPLETE | 4th tab with force-directed canvas renderer, phase selector, migration status overlay |
+| R10-2 | Added graph snapshot to `phase2_mechanical.py` | COMPLETE | Runs `analyze_universal.py` after mechanical conversions |
+| R10-3 | Added graph snapshot to `phase5_cutover.py` | COMPLETE | Runs `analyze_universal.py` before final security audit |
+| R10-4 | Updated migration-dashboard SKILL.md | COMPLETE | Documented Graph tab in Run Status Viewer section |
+| R10-5 | Updated SKILL-UPDATE-PLAN.md | COMPLETE | Round 10 + code sanitization backlog |
+
+### Graph Tab Features
+
+- **Force-directed canvas renderer**: adapted from `dependency-graph-template.html` — physics simulation with repulsion, edge attraction, cluster gravity, friction damping
+- **Phase selector**: switch between graph snapshots from Phase 0 (baseline), Phase 2 (post-mechanical), Phase 5 (post-cutover), or any phase that has a `dependency-graph.json`
+- **Migration status overlay**: nodes get colored rings showing migration state (gray=not started, yellow=in progress, blue=migrated, green=tested, purple=deployed)
+- **Interactive**: drag nodes, pan, scroll-to-zoom, click-to-highlight connections, hover for tooltip
+- **Tooltip**: module name, package, LOC, language, fan-in/fan-out, migration status, risk score
+- **Legend**: package colors + migration status color key
+- **Stats panel**: node count, edge count, package count, languages
+
+### Data Flow
+
+1. `graph_builder.py` outputs `dependency-graph.json` with `{nodes, edges, metrics}` format
+2. `adapt_graph_for_viz()` in `generate_run_status.py` converts to visualization format (maps filepaths to packages, merges migration-state.json status, computes per-node metrics)
+3. Multiple graph snapshots embedded as JSON blocks, client-side JS switches between them
+
+### Per-Phase Graph Snapshots
+
+| Phase | When | Purpose |
+|-------|------|---------|
+| Phase 0 (Discovery) | Already ran | Baseline codebase structure |
+| Phase 2 (Mechanical) | New — after all automated fixes | Shows structural changes from mechanical conversions |
+| Phase 5 (Cutover) | New — before final security audit | Final codebase structure for before/after comparison |
+
+## Next Steps
+
+See `BACKLOG.md` in the project root for the canonical backlog. Items previously tracked here (P2–P4) have been consolidated there.

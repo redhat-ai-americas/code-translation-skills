@@ -479,9 +479,61 @@ Output: self-contained HTML file (same pattern as migration progress dashboard �
 - **Phase 5 (cutover)**: Generate as part of final deliverables alongside SBOM and migration report
 - **Ad hoc**: Run at any time during migration to check tool utilization so far
 
+## Run Status Viewer
+
+A single-page "open in browser" status view for a migration run. Combines phase progress, script execution timeline, log viewer, and gate status into one tabbed interface.
+
+### When to Use
+
+Open at any time during or after a migration to see what's happening. Designed for the "pull up in a browser tab and check" use case — quick, visual, no setup.
+
+### Four Tabs
+
+1. **Overview** — phase stepper (which phases are done / active / pending), summary cards (scripts run, skills used, failures, invocations), gate status, and a reverse-chronological execution list
+2. **Timeline** — canvas Gantt chart of script executions over time, plus a duration-by-skill bar chart
+3. **Logs** — searchable, filterable audit log viewer with level highlighting (errors in red, warnings in orange)
+4. **Graph** — interactive force-directed dependency graph visualization with per-phase snapshots and migration status overlay
+
+### Graph Tab Details
+
+The Graph tab embeds the force-directed renderer from `dependency-graph-template.html` into the run status viewer. It loads `dependency-graph.json` from each phase directory and overlays migration status colors from `migration-state.json`.
+
+**Features:**
+- **Phase selector**: switch between graph snapshots (Phase 0 baseline, Phase 2 post-mechanical, Phase 5 post-cutover)
+- **Force-directed layout**: physics simulation with repulsion, edge attraction, cluster gravity
+- **Migration status rings**: nodes colored by status (gray=not started, yellow=in progress, blue=migrated, green=tested, purple=deployed)
+- **Interactive**: drag nodes, pan, scroll-to-zoom, click-to-highlight connections
+- **Tooltip**: module name, package, LOC, language, fan-in/fan-out, migration status, risk score
+- **Legend**: package colors and migration status indicators
+- **Stats**: node count, edge count, package count, languages
+
+### Usage
+
+```bash
+python3 generate_run_status.py <analysis_dir> \
+    [--output run-status.html] \
+    [--project-name "My Project"]
+```
+
+Output: self-contained HTML file. Same zero-dependency pattern — dark theme, embedded data, client-side interactivity.
+
+### Invocation Points
+
+- **Any time**: Generate during a migration to check progress
+- **Phase runners**: Can be called at the end of each phase runner to produce an updated view
+- **Post-migration**: Generate as part of final deliverables
+
 ## Model Tier
 
 **Haiku.** Dashboard generation reads pre-computed JSON files and produces HTML. Pure template rendering with data binding. No LLM reasoning required. Always use Haiku.
+
+## Scripts Reference
+
+| Script | Purpose |
+|--------|---------|
+| `generate_dashboard.py` | Migration progress dashboard (modules, phases, risk, gates, costs) |
+| `generate_skill_usage_dashboard.py` | Post-migration skill coverage analysis (which skills ran, expected skips, gaps) |
+| `generate_run_status.py` | Live run status viewer (phase stepper, timeline, log viewer) |
 
 ## References
 

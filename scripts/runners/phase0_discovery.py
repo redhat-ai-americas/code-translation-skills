@@ -161,6 +161,11 @@ def phase0_discovery(project_root, output_dir):
 
     print(f"\n  Output files: {list(output_dir.glob('*.json'))}", file=sys.stderr)
 
+    # Regenerate run status viewer
+    status_script = SKILLS_DIR / "migration-dashboard" / "scripts" / "generate_run_status.py"
+    analysis_dir = output_dir.parent
+    run_script(status_script, [str(analysis_dir)], "Updating run status viewer")
+
     # Output JSON summary
     print(json.dumps(summary, indent=2))
 

@@ -9,13 +9,51 @@ LLM involvement: PREPARES brief for LLM review (zero orchestration cost)
 
 import argparse
 import json
+import subprocess
 import sys
 from pathlib import Path
 
 # ── Logging ──────────────────────────────────────────────────────────────────
 import sys as _sys; _sys.path.insert(0, str(__import__('pathlib').Path(__file__).resolve().parents[1] / 'lib'))
-from migration_logger import setup_logging, log_execution
+from migration_logger import setup_logging, log_execution, log_invocation
 logger = setup_logging(__name__)
+
+SKILLS_DIR = Path(__file__).resolve().parent.parent.parent / "skills"
+
+
+def run_script(script_path, args, description):
+    """Run a script, capture output, handle errors."""
+    if not script_path.exists():
+        logger.warning(f"Script not found, skipping: {script_path}")
+        return {"status": "skipped", "reason": f"Script not found: {script_path}"}
+
+    cmd = [sys.executable, str(script_path)] + args
+    print(f"  → {description}...", file=sys.stderr)
+    logger.info(f"Invoking: {description} ({script_path.name})")
+    start_time = __import__('time').monotonic()
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        duration = __import__('time').monotonic() - start_time
+        log_invocation(script_path, args, result.returncode, duration,
+                      len(result.stdout.encode()), len(result.stderr.encode()))
+        if result.returncode == 0:
+            try:
+                return {"status": "complete", "output": json.loads(result.stdout)}
+            except json.JSONDecodeError:
+                return {"status": "complete", "output": result.stdout[:500]}
+        elif result.returncode == 1:
+            try:
+                return {"status": "partial", "output": json.loads(result.stdout)}
+            except json.JSONDecodeError:
+                return {"status": "partial", "output": result.stdout[:500]}
+        else:
+            return {"status": "error", "stderr": result.stderr[:500]}
+    except subprocess.TimeoutExpired:
+        logger.error("Script execution timed out")
+        return {"status": "timeout"}
+    except Exception as e:
+        logger.error(f"Script execution error: {e}")
+        return {"status": "error", "error": str(e)}
 
 
 def phase3_semantic(work_items_path, raw_scan_path, output_dir):
@@ -127,6 +165,11 @@ def phase3_semantic(work_items_path, raw_scan_path, output_dir):
     print(f"  Automated (non-LLM) items: {skipped_items}", file=sys.stderr)
     print(f"\n  Estimated LLM tokens: {brief['summary']['estimated_llm_tokens']}", file=sys.stderr)
     print(f"\nPhase 3 brief prepared. Next: Use brief with Claude Sonnet/Opus for semantic fixes", file=sys.stderr)
+
+    # Regenerate run status viewer
+    status_script = SKILLS_DIR / "migration-dashboard" / "scripts" / "generate_run_status.py"
+    analysis_dir = output_dir.parent
+    run_script(status_script, [str(analysis_dir)], "Updating run status viewer")
 
     # Output JSON summary
     summary_output = {
