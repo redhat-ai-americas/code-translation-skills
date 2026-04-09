@@ -14,7 +14,7 @@ Copy and paste this into a new chat:
 
 I have a complete Python 2→3 migration skill suite at `/Users/wjackson/Developer/code-translation-skills/`. Please read these files to get up to speed:
 
-1. `PLAN.md` — the complete migration skill suite plan (26 skills across 6 phases)
+1. `planning/PLAN.md` — the complete migration skill suite plan (26 skills across 6 phases)
 2. `BUILD-TRACKER.md` — tracks what's been built (all 26 complete)
 
 **All 26 skills are built across 5 tiers:**
@@ -40,6 +40,6 @@ I have a complete Python 2→3 migration skill suite at `/Users/wjackson/Develop
 4. **Documentation** — generate a user guide / quickstart for running the migration pipeline
 5. **Bug fixes** — iterate on individual skills based on real-world testing feedback
 
-Please read PLAN.md and BUILD-TRACKER.md, then tell me what you'd like to work on.
+Please read planning/PLAN.md and BUILD-TRACKER.md, then tell me what you'd like to work on.
 
 ---

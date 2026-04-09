@@ -146,7 +146,6 @@ Reference documents (encoding patterns, syntax change catalogs, test vectors, et
 | [Scale Playbook](docs/SCALE-PLAYBOOK.md) | How to adjust the workflow for small, medium, large, and very large codebases |
 | [PLAN.md](planning/PLAN.md) | Authoritative specification for all 27 skills — inputs, outputs, capabilities, gate criteria, rollback procedures |
 | [Migration Guide](docs/MIGRATION-GUIDE.md) | Practitioner's guide to the "why" behind the migration approach — read this first for strategic context |
-| [docs/process/](docs/process/) | Build history: tracker, review reports, exploration chat log, prompt templates |
 
 ## Project Structure
 

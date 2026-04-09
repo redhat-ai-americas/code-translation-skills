@@ -38,4 +38,4 @@ Things the research document, when written, should cover:
 ## Related
 
 - `retrospectives/2026-04-08_code-translation-skills-bootstrap/RETRO.md` — source of this stub
-- `ideas/agent-kit-generalization/` — related brainstorming on generalizing the skill suite beyond py2to3; framing and bounding are a critical part of that generalization
+- `planning/agent-kit-generalization/` — related brainstorming on generalizing the skill suite beyond py2to3; framing and bounding are a critical part of that generalization
