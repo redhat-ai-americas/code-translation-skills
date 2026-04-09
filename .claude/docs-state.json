@@ -1,0 +1,33 @@
+{
+  "reorg": {
+    "completed_at": "2026-04-09T05:50:05Z",
+    "completed_commit": "6bde2ab1cc6d9c5f11c92c23ee4b5b0e2b31b2d2",
+    "skill_version": "1.0",
+    "structure": {
+      "docs": "docs/",
+      "planning": "planning/",
+      "research": "research/",
+      "demos": null
+    },
+    "artifacts": {
+      "docs_index": "docs/README.md",
+      "llms_txt": "llms.txt",
+      "llms_full_txt": null
+    },
+    "notes": [
+      "No demos/ directory created — the only candidate demo artifacts (run-status-*.html) are gitignored and out of scope.",
+      "docs/references/shared/ was renamed to docs/references/python-migration/ (not a sibling-dir move). The vestigial 'shared/' level implied per-phase references that never materialized; explicit py2to3 scoping sets up future migration targets (e.g. Java) to get sibling reference clusters.",
+      "27 skill INDEX.md files were updated as part of the references rename.",
+      "retrospectives/ remains a fifth top-level directory (established convention, not touched).",
+      "GETTING-STARTED.md kept at root as a well-known quick-start landing, not moved into docs/.",
+      "Open GitHub issues #14-23 and #26 were sweep-edited to reference the new planning/BACKLOG.md and research/framing-and-bounding/ paths. Closed issues left alone.",
+      "llms-full.txt deliberately skipped — project is under active development with large planning docs (50K+ PLAN.md, 174K MIGRATION-GUIDE.md); a curated bundle would be large and quickly stale."
+    ],
+    "flagged_followups": [
+      "CHANGELOG.md missing — add once the project starts cutting tagged releases.",
+      "Hosted docs site (MkDocs / Read the Docs) worth considering as the tree continues to grow past GitHub-markdown-rendering comfort.",
+      "No auto-generated API reference needed — this is a skills catalog, not a library with a public API surface."
+    ]
+  },
+  "refreshes": []
+}

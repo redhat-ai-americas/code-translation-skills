@@ -1,0 +1,96 @@
+migration:
+  id: java8to17
+  source: { language: java, version: "8" }
+  target: { language: java, version: "17" }
+  description: "Java 8 to Java 17 library replacements covering Jakarta EE namespace migration and JDK module removals"
+
+# Java imports are hierarchical: a rule keyed on "javax.servlet" will match
+# "javax.servlet.http.HttpServlet", "javax.servlet.Filter", etc.
+# treeloom normalizes "import javax.servlet.http.HttpServlet" as:
+#   module: "javax.servlet.http", names: ["HttpServlet"]
+# So we match on package prefixes.
+match_strategy: prefix
+
+mappings:
+  # ──────────────────────────────────────────────────────────────
+  # Jakarta EE namespace migration (javax → jakarta)
+  # Jakarta EE 9 (2020) renamed every javax.* package to jakarta.*.
+  # This is a compile-time breaking change: old and new jars are binary-incompatible.
+  # ──────────────────────────────────────────────────────────────
+
+  javax.servlet:
+    action: rename
+    target_module: jakarta.servlet
+    notes: >
+      Jakarta EE 9 renamed the Servlet API package namespace. Requires upgrading
+      from javax.servlet:javax.servlet-api to jakarta.servlet:jakarta.servlet-api
+      (4.0+ for Jakarta EE 9, 6.0+ for Jakarta EE 10). Spring Boot 3.x and
+      Quarkus 3.x both target the jakarta namespace and will fail to compile
+      against the old javax jars.
+    install: "Replace javax.servlet:javax.servlet-api with jakarta.servlet:jakarta.servlet-api:6.0.0 in pom.xml"
+
+  javax.persistence:
+    action: rename
+    target_module: jakarta.persistence
+    notes: >
+      JPA 3.0 (Jakarta EE 9) renamed the persistence package. Hibernate 6.x and
+      EclipseLink 3.x use jakarta.persistence. Hibernate 5.x still uses
+      javax.persistence — do not mix versions within a project.
+    install: "Replace javax.persistence:javax.persistence-api with jakarta.persistence:jakarta.persistence-api:3.1.0 in pom.xml"
+
+  javax.annotation:
+    action: rename
+    target_module: jakarta.annotation
+    notes: >
+      Common annotations such as @PostConstruct, @PreDestroy, and @Resource moved
+      to the jakarta namespace. Note that java.lang.annotation.* (part of the JDK
+      itself) is unaffected; only the EE-layer annotations need updating.
+    install: "Replace javax.annotation:javax.annotation-api with jakarta.annotation:jakarta.annotation-api:2.1.1 in pom.xml"
+
+  javax.inject:
+    action: rename
+    target_module: jakarta.inject
+    notes: >
+      JSR-330 dependency-injection annotations (@Inject, @Named, @Singleton, etc.)
+      moved to the jakarta namespace in CDI 4.0. The semantics are unchanged; only
+      the package name differs.
+    install: "Replace javax.inject:javax.inject:1 with jakarta.inject:jakarta.inject-api:2.0.1 in pom.xml"
+
+  # ──────────────────────────────────────────────────────────────
+  # JDK module removals (Java 11, JEP 320)
+  # These packages shipped inside the JDK through Java 8 but were deprecated in
+  # Java 9 (as part of the module system) and removed in Java 11. Code that used
+  # them without an explicit dependency will break immediately on Java 11+.
+  # ──────────────────────────────────────────────────────────────
+
+  javax.xml.bind:
+    action: removed
+    removed_in: "11"
+    replacements:
+      - library: jakarta.xml.bind-api
+        install: "Add jakarta.xml.bind:jakarta.xml.bind-api:4.0.0 and org.glassfish.jaxb:jaxb-runtime:4.0.3 to pom.xml"
+        notes: >
+          JAXB was removed from the JDK in Java 11 (JEP 320). The package prefix
+          changed from javax.xml.bind to jakarta.xml.bind in Jakarta EE 9. Add both
+          the API jar and a runtime (e.g. org.glassfish.jaxb:jaxb-runtime:4.0.x).
+
+  javax.xml.ws:
+    action: removed
+    removed_in: "11"
+    replacements:
+      - library: jakarta.xml.ws-api
+        install: "Add jakarta.xml.ws:jakarta.xml.ws-api:4.0.0 and com.sun.xml.ws:jaxws-rt:4.0.1 to pom.xml"
+        notes: >
+          JAX-WS was removed from the JDK in Java 11 (JEP 320). If migrating to
+          REST instead of SOAP, consider replacing JAX-WS entirely with Jakarta REST.
+
+  javax.activation:
+    action: removed
+    removed_in: "11"
+    replacements:
+      - library: jakarta.activation-api
+        install: "Add jakarta.activation:jakarta.activation-api:2.1.2 to pom.xml"
+        notes: >
+          JAF was removed from the JDK in Java 11 (JEP 320). It is a transitive
+          dependency of JAXB and JAX-WS; adding those usually pulls it in
+          automatically. Add explicitly only if you reference it directly.

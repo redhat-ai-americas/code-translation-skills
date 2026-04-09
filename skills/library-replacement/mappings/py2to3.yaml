@@ -1,0 +1,367 @@
+migration:
+  id: py2to3
+  source: { language: python, version: "2.7" }
+  target: { language: python, version: "3.11" }
+  description: "Python 2 to Python 3 standard library replacements"
+
+# Match strategy: how to compare import module names against mapping keys.
+# "exact" = module must equal the key.
+# "prefix" = module must start with the key (e.g. "distutils.core" matches "distutils").
+match_strategy: exact
+
+# Note on version filtering: entries with action: removed include a removed_in field.
+# Callers should skip (or downgrade to advisory) entries where removed_in > target version.
+# REMOVED_3_12 set from source: aifc, audioop, cgi, cgitb, chunk, crypt, imghdr,
+#   mailcap, msilib, nis, nntplib, ossaudiodev, pipes, sndhdr, spwd, sunau,
+#   telnetlib, uu, xdrlib, distutils
+# Note: chunk, mailcap, msilib, nis, ossaudiodev, sndhdr, spwd, sunau are in
+#   REMOVED_3_12 but had no replacement entries in the original LIBRARY_MAP.
+
+mappings:
+  # ── RENAMED: Simple 1:1 module renames ───────────────────────────────────
+
+  ConfigParser:
+    action: rename
+    target_module: configparser
+    notes: "Config file parsing"
+    import_transforms:
+      ConfigParser.ConfigParser: configparser.ConfigParser
+      ConfigParser.SafeConfigParser: configparser.ConfigParser
+
+  Queue:
+    action: rename
+    target_module: queue
+    notes: "Thread-safe queue data structures"
+    import_transforms:
+      Queue.Queue: queue.Queue
+      Queue.LifoQueue: queue.LifoQueue
+      Queue.PriorityQueue: queue.PriorityQueue
+
+  SocketServer:
+    action: rename
+    target_module: socketserver
+    notes: "Framework for network servers"
+    import_transforms: {}
+
+  HTMLParser:
+    action: rename
+    target_module: html.parser
+    notes: "HTML/XHTML parser"
+    import_transforms:
+      HTMLParser.HTMLParser: html.parser.HTMLParser
+
+  httplib:
+    action: rename
+    target_module: http.client
+    notes: "HTTP protocol client"
+    import_transforms: {}
+
+  repr:
+    action: rename
+    target_module: reprlib
+    notes: "Alternate repr() implementation with size limits"
+    import_transforms: {}
+
+  Tkinter:
+    action: rename
+    target_module: tkinter
+    notes: "GUI toolkit (Tk interface)"
+    import_transforms: {}
+
+  thread:
+    action: rename
+    target_module: _thread
+    notes: "Consider using 'threading' module instead. Low-level thread primitives."
+    import_transforms: {}
+
+  commands:
+    action: removed
+    removed_in: "3.0"
+    replacements:
+      - library: "subprocess (stdlib)"
+        install: "N/A"
+        import_transforms:
+          commands.getoutput: subprocess.getoutput
+          commands.getstatusoutput: subprocess.getstatusoutput
+        notes: "Use subprocess module. getoutput/getstatusoutput have direct equivalents."
+
+  copy_reg:
+    action: rename
+    target_module: copyreg
+    notes: "Register pickle support functions"
+    import_transforms: {}
+
+  xmlrpclib:
+    action: rename
+    target_module: xmlrpc.client
+    notes: "XML-RPC client"
+    import_transforms: {}
+
+  Cookie:
+    action: rename
+    target_module: http.cookies
+    notes: "HTTP cookie handling"
+    import_transforms: {}
+
+  cookielib:
+    action: rename
+    target_module: http.cookiejar
+    notes: "HTTP cookie jar (persistent cookies)"
+    import_transforms: {}
+
+  htmlentitydefs:
+    action: rename
+    target_module: html.entities
+    notes: "HTML entity definitions"
+    import_transforms: {}
+
+  robotparser:
+    action: rename
+    target_module: urllib.robotparser
+    notes: "robots.txt file parser"
+    import_transforms:
+      robotparser.RobotFileParser: urllib.robotparser.RobotFileParser
+
+  UserDict:
+    action: rename
+    target_module: collections
+    notes: "Wrapper around dict for subclassing"
+    import_transforms:
+      UserDict.UserDict: collections.UserDict
+
+  UserList:
+    action: rename
+    target_module: collections
+    notes: "Wrapper around list for subclassing"
+    import_transforms:
+      UserList.UserList: collections.UserList
+
+  UserString:
+    action: rename
+    target_module: collections
+    notes: "Wrapper around str for subclassing"
+    import_transforms:
+      UserString.UserString: collections.UserString
+
+  BaseHTTPServer:
+    action: rename
+    target_module: http.server
+    notes: "Basic HTTP server framework"
+    import_transforms:
+      BaseHTTPServer.HTTPServer: http.server.HTTPServer
+      BaseHTTPServer.BaseHTTPRequestHandler: http.server.BaseHTTPRequestHandler
+
+  SimpleHTTPServer:
+    action: rename
+    target_module: http.server
+    notes: "Simple HTTP request handler"
+    import_transforms:
+      SimpleHTTPServer.SimpleHTTPRequestHandler: http.server.SimpleHTTPRequestHandler
+
+  CGIHTTPServer:
+    action: rename
+    target_module: http.server
+    notes: "CGI-capable HTTP request handler"
+    import_transforms:
+      CGIHTTPServer.CGIHTTPRequestHandler: http.server.CGIHTTPRequestHandler
+
+  DocXMLRPCServer:
+    action: rename
+    target_module: xmlrpc.server
+    notes: "Self-documenting XML-RPC server"
+    import_transforms:
+      DocXMLRPCServer.DocXMLRPCRequestHandler: xmlrpc.server.DocXMLRPCRequestHandler
+
+  SimpleXMLRPCServer:
+    action: rename
+    target_module: xmlrpc.server
+    notes: "Basic XML-RPC server"
+    import_transforms:
+      SimpleXMLRPCServer.SimpleXMLRPCServer: xmlrpc.server.SimpleXMLRPCServer
+
+  # ── REMOVED: Modules removed by version ──────────────────────────────────
+
+  distutils:
+    action: removed
+    removed_in: "3.12"
+    replacements:
+      - library: setuptools
+        install: "pip install setuptools"
+        import_transforms:
+          distutils.core.setup: setuptools.setup
+          distutils.core.Extension: setuptools.Extension
+          distutils.command: setuptools.command
+        notes: "Critical blocker for 3.12+. Requires build system upgrade."
+      - library: "sysconfig (stdlib)"
+        install: "N/A"
+        import_transforms:
+          distutils.sysconfig: sysconfig
+        notes: "Use stdlib sysconfig for path utilities"
+
+  cgi:
+    action: removed
+    removed_in: "3.12"
+    replacements:
+      - library: "urllib.parse (stdlib)"
+        install: "N/A"
+        import_transforms:
+          cgi.parse_qs: urllib.parse.parse_qs
+          cgi.parse_qsl: urllib.parse.parse_qsl
+        notes: "For form parsing. CGI serving via http.server"
+
+  cgitb:
+    action: removed
+    removed_in: "3.12"
+    replacements:
+      - library: "traceback (stdlib)"
+        install: "N/A"
+        import_transforms: {}
+        notes: "Use traceback.print_exc() or faulthandler for detailed tracebacks"
+
+  pipes:
+    action: removed
+    removed_in: "3.12"
+    replacements:
+      - library: "subprocess (stdlib)"
+        install: "N/A"
+        import_transforms: {}
+        notes: "Use subprocess.run() or shlex.quote()"
+
+  crypt:
+    action: removed
+    removed_in: "3.12"
+    replacements:
+      - library: bcrypt
+        install: "pip install bcrypt"
+        import_transforms: {}
+        notes: "Modern password hashing. Use bcrypt.hashpw()"
+
+  imghdr:
+    action: removed
+    removed_in: "3.12"
+    replacements:
+      - library: filetype
+        install: "pip install filetype"
+        import_transforms: {}
+        notes: "Image format detection"
+
+  telnetlib:
+    action: removed
+    removed_in: "3.12"
+    replacements:
+      - library: telnetlib3
+        install: "pip install telnetlib3"
+        import_transforms: {}
+        notes: "Async telnet client. Prefer SSH when possible."
+
+  uu:
+    action: removed
+    removed_in: "3.12"
+    replacements:
+      - library: "base64 (stdlib)"
+        install: "N/A"
+        import_transforms:
+          uu.encode: "base64.encodebytes / decodebytes"
+        notes: "Use base64.encodebytes()/decodebytes()"
+
+  xdrlib:
+    action: removed
+    removed_in: "3.12"
+    replacements:
+      - library: "struct (stdlib)"
+        install: "N/A"
+        import_transforms: {}
+        notes: "Use struct for binary data. XDR is rarely used; consider protobuf."
+
+  aifc:
+    action: removed
+    removed_in: "3.12"
+    replacements:
+      - library: soundfile
+        install: "pip install soundfile"
+        import_transforms: {}
+        notes: "Audio file I/O"
+
+  audioop:
+    action: removed
+    removed_in: "3.12"
+    replacements:
+      - library: pydub
+        install: "pip install pydub"
+        import_transforms: {}
+        notes: "Audio processing"
+
+  nntplib:
+    action: removed
+    removed_in: "3.12"
+    replacements:
+      - library: "nntplib (backport)"
+        install: "pip install nntplib"
+        import_transforms: {}
+        notes: "NNTP client (rarely needed)"
+
+  # ── COMPLEX: Special cases requiring usage analysis ───────────────────────
+
+  urllib2:
+    action: split
+    description: "Py2 urllib2 split into urllib.request, urllib.error, urllib.parse"
+    import_transforms:
+      - from_import: urllib2.Request
+        to_import: urllib.request.Request
+        notes: "HTTP request builder"
+      - from_import: urllib2.urlopen
+        to_import: urllib.request.urlopen
+        notes: "Open URL and return file-like object"
+      - from_import: urllib2.HTTPError
+        to_import: urllib.error.HTTPError
+        notes: "HTTP error exception"
+      - from_import: urllib2.URLError
+        to_import: urllib.error.URLError
+        notes: "URL error exception"
+      - from_import: urllib2.build_opener
+        to_import: urllib.request.build_opener
+        notes: "Build custom opener"
+
+  urlparse:
+    action: rename
+    target_module: urllib.parse
+    description: "urlparse module renamed to urllib.parse"
+    import_transforms:
+      urlparse.urlparse: urllib.parse.urlparse
+      urlparse.urljoin: urllib.parse.urljoin
+      urlparse.urlunparse: urllib.parse.urlunparse
+      urlparse.parse_qs: urllib.parse.parse_qs
+
+  cStringIO:
+    action: choice
+    description: "cStringIO/StringIO -> io.StringIO or io.BytesIO (depends on usage)"
+    import_transforms:
+      - from_import: cStringIO.StringIO
+        to_import: io.BytesIO
+        condition: "if handling bytes data"
+        notes: "Bytes buffer"
+      - from_import: cStringIO.StringIO
+        to_import: io.StringIO
+        condition: "if handling text data"
+        notes: "Text buffer"
+
+  StringIO:
+    action: choice
+    description: "StringIO module -> io.StringIO or io.BytesIO (depends on usage)"
+    import_transforms:
+      - from_import: StringIO.StringIO
+        to_import: io.BytesIO
+        condition: "if handling bytes data"
+        notes: "Bytes buffer"
+      - from_import: StringIO.StringIO
+        to_import: io.StringIO
+        condition: "if handling text data"
+        notes: "Text buffer"
+
+  cPickle:
+    action: rename
+    target_module: pickle
+    description: "cPickle renamed to pickle (C implementation auto-selected in Py3)"
+    notes: "Flag protocol version usage — protocol 3+ recommended for Py3."
+    import_transforms:
+      cPickle: pickle
