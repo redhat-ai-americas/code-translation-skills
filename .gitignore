@@ -50,3 +50,6 @@ build/
 
 # Dev-time run status viewer previews (regeneratable via generate_run_status.py)
 run-status-*.html
+
+# Session handoff doc — working file, kept local
+NEXT_SESSION.md
