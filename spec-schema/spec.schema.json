@@ -1,0 +1,398 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/redhat-ai-americas/code-translation-skills/spec-schema/spec.schema.json",
+  "title": "Code Translation Kit Specification",
+  "description": "Language-neutral, machine-readable, human-reviewable specification of what an application does. Central artifact of the vertical plane model. Layers semantic understanding on top of a companion treeloom CPG.",
+  "type": "object",
+  "required": ["meta", "cpg_ref", "elements"],
+  "additionalProperties": false,
+  "properties": {
+    "meta": { "$ref": "#/$defs/meta" },
+    "cpg_ref": { "$ref": "#/$defs/cpg_ref" },
+    "ecosystem_dependencies": {
+      "type": "array",
+      "description": "Package-level audit data from veripak. Attached at the project level.",
+      "items": { "$ref": "#/$defs/ecosystem_dependency" }
+    },
+    "security_findings": {
+      "type": "array",
+      "description": "Security findings from sanicode or other SAST tools. Each finding references a file:line and optionally a CPG node.",
+      "items": { "$ref": "#/$defs/security_finding" }
+    },
+    "elements": {
+      "type": "object",
+      "description": "The semantic layer. Each entry adds meaning the CPG alone does not capture: behavioral contracts, intent, trust boundaries. Keyed by a human-readable element ID (e.g. 'fn:org.jsoup.safety.Cleaner/clean').",
+      "additionalProperties": { "$ref": "#/$defs/element" }
+    },
+    "usage_paths": {
+      "type": "array",
+      "description": "Cross-node flows: call chains, request paths, event propagation. These span multiple elements and are inherently multi-node.",
+      "items": { "$ref": "#/$defs/usage_path" }
+    }
+  },
+  "$defs": {
+    "meta": {
+      "type": "object",
+      "required": ["project_name", "spec_version"],
+      "additionalProperties": false,
+      "properties": {
+        "project_name": {
+          "type": "string",
+          "description": "Name of the project being specified."
+        },
+        "spec_version": {
+          "type": "string",
+          "description": "Version of this schema (e.g. '0.1.0').",
+          "const": "0.1.0"
+        },
+        "source_language": {
+          "type": "string",
+          "description": "Primary source language (e.g. 'java', 'python')."
+        },
+        "source_version": {
+          "type": "string",
+          "description": "Source language version (e.g. '17', '3.11')."
+        },
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" },
+        "tools": {
+          "type": "object",
+          "description": "Tools used to populate this spec, keyed by tool name, value is version string.",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "cpg_ref": {
+      "type": "object",
+      "required": ["path"],
+      "additionalProperties": false,
+      "description": "Reference to the companion treeloom CPG. The CPG is the structural source of truth; the spec layers semantics on top.",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Relative path from the spec file to the CPG JSON."
+        },
+        "sha256": {
+          "type": "string",
+          "description": "SHA-256 hash of the CPG file for integrity verification."
+        },
+        "built_at": { "type": "string", "format": "date-time" },
+        "treeloom_version": { "type": "string" },
+        "stats": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "nodes": { "type": "integer" },
+            "edges": { "type": "integer" },
+            "files": { "type": "integer" },
+            "functions": { "type": "integer" },
+            "call_resolution_pct": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Percentage of call sites resolved to targets."
+            }
+          }
+        }
+      }
+    },
+    "element_metadata": {
+      "type": "object",
+      "description": "Provenance and review status. Every spec element and finding carries this.",
+      "required": ["confidence", "source", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "confidence": {
+          "enum": ["high", "medium", "low"],
+          "description": "How certain is this information."
+        },
+        "source": {
+          "enum": ["static_analysis", "llm_inference", "human_input", "test_evidence"],
+          "description": "How this information was obtained."
+        },
+        "status": {
+          "enum": ["extracted", "needs_review", "confirmed", "disputed"],
+          "description": "Review lifecycle state."
+        },
+        "assigned_to": {
+          "enum": ["agent", "human", "domain_expert"],
+          "description": "Who should act on this element next."
+        },
+        "updated_at": { "type": "string", "format": "date-time" },
+        "updated_by": {
+          "type": "string",
+          "description": "Identifier for who or what last modified this element."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Free-form annotation about provenance or review decisions."
+        }
+      }
+    },
+    "ecosystem_dependency": {
+      "type": "object",
+      "required": ["package", "ecosystem", "metadata"],
+      "additionalProperties": false,
+      "properties": {
+        "package": { "type": "string", "description": "Package name as it appears in the ecosystem registry." },
+        "ecosystem": { "type": "string", "description": "Package ecosystem: python, java, javascript, go, etc." },
+        "version_in_use": { "type": "string", "description": "Version currently used by the source project." },
+        "latest_version": { "type": "string", "description": "Latest available version in the registry." },
+        "cves": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "severity"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string" },
+              "severity": { "enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW"] },
+              "summary": { "type": "string" },
+              "affects_versions": { "type": "string" }
+            }
+          }
+        },
+        "eol": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "is_eol": { "type": ["boolean", "null"] },
+            "eol_date": { "type": ["string", "null"] },
+            "confidence": { "enum": ["high", "medium", "low"] }
+          }
+        },
+        "recommendation": { "type": "string", "description": "What to do about this dependency." },
+        "urgency": { "enum": ["immediate", "high", "medium", "low", "none"] },
+        "metadata": { "$ref": "#/$defs/element_metadata" }
+      }
+    },
+    "security_finding": {
+      "type": "object",
+      "required": ["file", "line", "rule_id", "severity", "metadata"],
+      "additionalProperties": false,
+      "properties": {
+        "node_ref": { "type": "string", "description": "CPG node ID this finding maps to, if resolvable." },
+        "file": { "type": "string" },
+        "line": { "type": "integer" },
+        "column": { "type": "integer" },
+        "rule_id": { "type": "string", "description": "Tool-specific rule identifier (e.g. 'SC059')." },
+        "message": { "type": "string" },
+        "severity": { "enum": ["critical", "high", "medium", "low", "info"] },
+        "cwe_id": { "type": "integer" },
+        "cwe_name": { "type": "string" },
+        "compliance": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Compliance framework cross-references.",
+          "properties": {
+            "owasp_asvs": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "id": { "type": "string" },
+                  "title": { "type": "string" },
+                  "level": { "type": "string" }
+                }
+              }
+            },
+            "nist_800_53": { "type": "array", "items": { "type": "string" } },
+            "asd_stig": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "id": { "type": "string" },
+                  "cat": { "type": "string" },
+                  "title": { "type": "string" }
+                }
+              }
+            },
+            "pci_dss": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "remediation": { "type": "string" },
+        "action": { "enum": ["fix", "review", "accept", "defer"] },
+        "metadata": { "$ref": "#/$defs/element_metadata" }
+      }
+    },
+    "element": {
+      "type": "object",
+      "required": ["hierarchy_level", "node_ref", "name", "metadata"],
+      "additionalProperties": false,
+      "properties": {
+        "hierarchy_level": {
+          "enum": ["system", "subsystem", "module", "class", "function"],
+          "description": "Where this element sits in the spec hierarchy."
+        },
+        "node_ref": {
+          "type": "string",
+          "description": "Treeloom CPG node ID. The structural source of truth for this element."
+        },
+        "name": { "type": "string", "description": "Human-readable name." },
+        "parent": {
+          "type": "string",
+          "description": "Element ID of the parent in the spec hierarchy (e.g. function's parent is a class or module)."
+        },
+        "file": { "type": "string", "description": "Source file path (convenience, also derivable from CPG)." },
+        "line": { "type": "integer", "description": "Start line number (convenience)." },
+        "contract": { "$ref": "#/$defs/contract" },
+        "data_model": { "$ref": "#/$defs/data_model" },
+        "notes": { "type": "string", "description": "Free-form human annotation." },
+        "metadata": { "$ref": "#/$defs/element_metadata" }
+      }
+    },
+    "contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Behavioral contract: what this element does, not how. Applies at any hierarchy level. A system has a contract ('processes orders'), a function has a contract ('validates email format').",
+      "properties": {
+        "purpose": {
+          "type": "string",
+          "description": "What this element does, in one paragraph."
+        },
+        "preconditions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "What must be true before invocation / entry."
+        },
+        "postconditions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "What is guaranteed after successful completion."
+        },
+        "invariants": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Properties that hold throughout this element's lifetime."
+        },
+        "side_effects": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Observable effects beyond the return value: I/O, state mutation, logging."
+        },
+        "error_conditions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["condition", "behavior"],
+            "additionalProperties": false,
+            "properties": {
+              "condition": { "type": "string", "description": "When this error occurs." },
+              "behavior": { "type": "string", "description": "What happens (exception, return value, etc.)." },
+              "severity": { "enum": ["fatal", "recoverable", "advisory"] }
+            }
+          }
+        },
+        "state_transitions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "from_state": { "type": "string" },
+              "to_state": { "type": "string" },
+              "trigger": { "type": "string" }
+            }
+          }
+        },
+        "trust_boundary": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "How this element relates to trust boundaries.",
+          "properties": {
+            "input_trust": {
+              "enum": ["trusted", "untrusted", "mixed", "n/a"],
+              "description": "Trust level of inputs to this element."
+            },
+            "output_trust": {
+              "enum": ["trusted", "untrusted", "mixed", "n/a"],
+              "description": "Trust level of outputs from this element."
+            },
+            "sanitization": {
+              "type": "string",
+              "description": "What sanitization this element performs, if any."
+            }
+          }
+        },
+        "thread_safety": {
+          "type": "string",
+          "description": "Concurrency guarantees or requirements worth preserving in translation."
+        },
+        "performance": {
+          "type": "string",
+          "description": "Complexity or performance characteristics worth preserving."
+        }
+      }
+    },
+    "data_model": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Data model facet: entities, relationships, lifecycle. Primarily applies at module and class levels.",
+      "properties": {
+        "entities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string" },
+              "description": { "type": "string" },
+              "fields": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": { "type": "string" },
+                    "type": { "type": "string" },
+                    "constraints": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "relationships": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "from_entity": { "type": "string" },
+              "to_entity": { "type": "string" },
+              "cardinality": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        },
+        "lifecycle": {
+          "type": "string",
+          "description": "How data is created, modified, and destroyed."
+        }
+      }
+    },
+    "usage_path": {
+      "type": "object",
+      "required": ["id", "name", "nodes", "metadata"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for this path." },
+        "name": { "type": "string", "description": "Human-readable name." },
+        "description": { "type": "string" },
+        "path_type": {
+          "enum": ["call_chain", "request_flow", "event_propagation", "data_flow"]
+        },
+        "nodes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Ordered list of element IDs or CPG node refs traversed by this path."
+        },
+        "metadata": { "$ref": "#/$defs/element_metadata" }
+      }
+    }
+  }
+}

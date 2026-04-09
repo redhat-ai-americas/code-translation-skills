@@ -1,0 +1,245 @@
+{# spec-review.md.j2 — Renders a spec JSON into a Markdown review document. #}
+{%- set m = meta -%}
+{%- set cpg = cpg_ref -%}
+# Spec: {{ m.project_name }}
+
+| Field | Value |
+|-------|-------|
+| Spec version | {{ m.spec_version }} |
+{%- if m.source_language %}
+| Source language | {{ m.source_language }}{% if m.source_version %} {{ m.source_version }}{% endif %} |
+{%- endif %}
+{%- if m.created_at %}
+| Created | {{ m.created_at }} |
+{%- endif %}
+{%- if m.updated_at %}
+| Updated | {{ m.updated_at }} |
+{%- endif %}
+{%- if m.tools %}
+| Tools | {% for tool, ver in m.tools.items() %}{{ tool }} {{ ver }}{% if not loop.last %}, {% endif %}{% endfor %} |
+{%- endif %}
+
+### CPG Reference
+
+| Field | Value |
+|-------|-------|
+| Path | `{{ cpg.path }}` |
+{%- if cpg.sha256 %}
+| SHA-256 | `{{ cpg.sha256[:16] }}...` |
+{%- endif %}
+{%- if cpg.treeloom_version %}
+| Treeloom | {{ cpg.treeloom_version }} |
+{%- endif %}
+{%- if cpg.built_at %}
+| Built | {{ cpg.built_at }} |
+{%- endif %}
+{%- if cpg.stats %}
+{%- set s = cpg.stats %}
+| Nodes | {{ s.nodes | default("?") }} |
+| Edges | {{ s.edges | default("?") }} |
+| Files | {{ s.files | default("?") }} |
+| Functions | {{ s.functions | default("?") }} |
+{%- if s.call_resolution_pct is defined %}
+| Call resolution | {{ s.call_resolution_pct }}% |
+{%- endif %}
+{%- endif %}
+
+---
+{% if ecosystem_dependencies %}
+
+## Ecosystem Dependencies
+
+| Package | Version | Latest | CVEs | Urgency | Status |
+|---------|---------|--------|------|---------|--------|
+{%- for dep in ecosystem_dependencies %}
+| {{ dep.package }} | {{ dep.version_in_use | default("?") }} | {{ dep.latest_version | default("?") }} | {% if dep.cves %}{% for cve in dep.cves %}{{ cve.id }} ({{ cve.severity }}){% if not loop.last %}, {% endif %}{% endfor %}{% else %}none{% endif %} | {{ dep.urgency | default("-") }} | {{ dep.metadata.status }} |
+{%- endfor %}
+{% endif %}
+{%- if security_findings %}
+
+## Security Findings
+
+{#- Group findings by severity, ordered critical-first. #}
+{%- set severity_order = ["critical", "high", "medium", "low", "info"] -%}
+{%- for sev in severity_order %}
+{%- set sev_findings = security_findings | selectattr("severity", "equalto", sev) | list %}
+{%- if sev_findings %}
+
+### {{ sev | capitalize }}
+
+| Location | Rule | CWE | Message | Action | Status |
+|----------|------|-----|---------|--------|--------|
+{%- for f in sev_findings %}
+| `{{ f.file }}:{{ f.line }}` | {{ f.rule_id }} | {% if f.cwe_id %}CWE-{{ f.cwe_id }}{% if f.cwe_name %} ({{ f.cwe_name }}){% endif %}{% else %}-{% endif %} | {{ f.message | default("-") }} | {{ f.action | default("-") }} | {{ f.metadata.status }} |
+{%- endfor %}
+{%- endif %}
+{%- endfor %}
+{% endif %}
+
+## Elements
+
+{#- Group elements by hierarchy level. #}
+{%- set hierarchy_order = ["system", "subsystem", "module", "class", "function"] -%}
+{%- for level in hierarchy_order %}
+{%- set level_elements = [] -%}
+{%- for eid, el in elements.items() if el.hierarchy_level == level -%}
+  {%- if level_elements.append((eid, el)) -%}{%- endif -%}
+{%- endfor %}
+{%- if level_elements %}
+
+### {{ level | capitalize }}{% if level == "class" %}es{% else %}s{% endif %}
+
+{% for eid, el in level_elements %}
+#### {{ el.name }}
+
+`{{ eid }}`
+{%- if el.file %} -- `{{ el.file }}{% if el.line %}:{{ el.line }}{% endif %}`{% endif %}
+
+| Confidence | Source | Status | Assigned to |
+|------------|--------|--------|-------------|
+| {{ el.metadata.confidence }} | {{ el.metadata.source }} | {{ el.metadata.status }} | {{ el.metadata.assigned_to | default("-") }} |
+
+{%- if el.contract %}
+{%- set c = el.contract %}
+
+**Contract**
+{% if c.purpose %}
+- **Purpose:** {{ c.purpose }}
+{%- endif %}
+{%- if c.preconditions %}
+- **Preconditions:**
+{%- for p in c.preconditions %}
+  - {{ p }}
+{%- endfor %}
+{%- endif %}
+{%- if c.postconditions %}
+- **Postconditions:**
+{%- for p in c.postconditions %}
+  - {{ p }}
+{%- endfor %}
+{%- endif %}
+{%- if c.invariants %}
+- **Invariants:**
+{%- for p in c.invariants %}
+  - {{ p }}
+{%- endfor %}
+{%- endif %}
+{%- if c.side_effects %}
+- **Side effects:**
+{%- for s in c.side_effects %}
+  - {{ s }}
+{%- endfor %}
+{%- endif %}
+{%- if c.error_conditions %}
+- **Error conditions:**
+{%- for e in c.error_conditions %}
+  - {{ e.condition }} -- {{ e.behavior }}{% if e.severity %} ({{ e.severity }}){% endif %}
+{%- endfor %}
+{%- endif %}
+{%- if c.state_transitions %}
+- **State transitions:**
+{%- for t in c.state_transitions %}
+  - {{ t.from_state | default("?") }} -> {{ t.to_state | default("?") }}{% if t.trigger %} ({{ t.trigger }}){% endif %}
+{%- endfor %}
+{%- endif %}
+{%- if c.trust_boundary %}
+{%- set tb = c.trust_boundary %}
+- **Trust boundary:** input={{ tb.input_trust | default("?") }}, output={{ tb.output_trust | default("?") }}{% if tb.sanitization %}, sanitization: {{ tb.sanitization }}{% endif %}
+{%- endif %}
+{%- if c.thread_safety %}
+- **Thread safety:** {{ c.thread_safety }}
+{%- endif %}
+{%- if c.performance %}
+- **Performance:** {{ c.performance }}
+{%- endif %}
+{%- endif %}
+
+{%- if el.data_model %}
+{%- set dm = el.data_model %}
+
+**Data Model**
+{%- if dm.entities %}
+{%- for ent in dm.entities %}
+- **{{ ent.name }}**{% if ent.description %}: {{ ent.description }}{% endif %}
+{%- if ent.fields %}
+{%- for f in ent.fields %}
+  - `{{ f.name }}`{% if f.type %}: {{ f.type }}{% endif %}{% if f.constraints %} ({{ f.constraints }}){% endif %}
+{%- endfor %}
+{%- endif %}
+{%- endfor %}
+{%- endif %}
+{%- if dm.relationships %}
+
+*Relationships:*
+{%- for r in dm.relationships %}
+- {{ r.from_entity | default("?") }} -> {{ r.to_entity | default("?") }}{% if r.cardinality %} [{{ r.cardinality }}]{% endif %}{% if r.description %}: {{ r.description }}{% endif %}
+{%- endfor %}
+{%- endif %}
+{%- if dm.lifecycle %}
+
+*Lifecycle:* {{ dm.lifecycle }}
+{%- endif %}
+{%- endif %}
+
+{%- if el.notes %}
+
+**Notes:** {{ el.notes }}
+{%- endif %}
+
+{%- if el.metadata.notes %}
+
+**Review notes:** {{ el.metadata.notes }}
+{%- endif %}
+
+---
+{% endfor %}
+{%- endif %}
+{%- endfor %}
+{%- if usage_paths %}
+
+## Usage Paths
+
+{% for path in usage_paths %}
+### {{ path.name }}
+
+{% if path.description %}{{ path.description }}
+
+{% endif %}
+| Field | Value |
+|-------|-------|
+| ID | `{{ path.id }}` |
+{%- if path.path_type %}
+| Type | {{ path.path_type }} |
+{%- endif %}
+| Status | {{ path.metadata.status }} |
+
+**Nodes:** {% for n in path.nodes %}`{{ n }}`{% if not loop.last %} -> {% endif %}{% endfor %}
+
+{% endfor %}
+{%- endif %}
+
+---
+
+## Review Summary
+
+{%- set all_elements = elements.values() | list %}
+{%- set confirmed = all_elements | selectattr("metadata.status", "equalto", "confirmed") | list | length %}
+{%- set needs_review = all_elements | selectattr("metadata.status", "equalto", "needs_review") | list | length %}
+{%- set extracted = all_elements | selectattr("metadata.status", "equalto", "extracted") | list | length %}
+{%- set disputed = all_elements | selectattr("metadata.status", "equalto", "disputed") | list | length %}
+
+| Category | Count | Breakdown |
+|----------|-------|-----------|
+| Elements | {{ all_elements | length }} | {{ confirmed }} confirmed, {{ needs_review }} needs_review, {{ extracted }} extracted{% if disputed %}, {{ disputed }} disputed{% endif %} |
+{%- if security_findings %}
+{%- set high_crit = security_findings | selectattr("severity", "in", ["critical", "high"]) | list | length %}
+| Security findings | {{ security_findings | length }} | {{ high_crit }} high/critical |
+{%- endif %}
+{%- if ecosystem_dependencies %}
+{%- set with_cves = ecosystem_dependencies | selectattr("cves", "defined") | list %}
+{%- set cve_count = [] %}
+{%- for dep in with_cves if dep.cves %}
+  {%- if cve_count.append(dep) %}{%- endif %}
+{%- endfor %}
+| Dependencies | {{ ecosystem_dependencies | length }} | {{ cve_count | length }} with CVEs |
+{%- endif %}

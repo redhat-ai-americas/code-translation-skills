@@ -1,0 +1,611 @@
+{
+  "meta": {
+    "project_name": "python-dateutil (parser module)",
+    "spec_version": "0.1.0",
+    "source_language": "python",
+    "source_version": "3.11",
+    "created_at": "2026-04-09T14:00:00Z",
+    "updated_at": "2026-04-09T14:00:00Z",
+    "tools": {
+      "treeloom": "0.4.0",
+      "veripak": "0.2.0",
+      "sanicode": "0.3.0"
+    }
+  },
+  "cpg_ref": {
+    "path": "../dateutil-example/cpg.json",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "built_at": "2026-04-09T13:45:00Z",
+    "treeloom_version": "0.4.0",
+    "stats": {
+      "nodes": 8039,
+      "edges": 17590,
+      "files": 17,
+      "functions": 306,
+      "call_resolution_pct": 34
+    }
+  },
+  "ecosystem_dependencies": [
+    {
+      "package": "python-dateutil",
+      "ecosystem": "python",
+      "version_in_use": "2.8.2",
+      "latest_version": "2.9.0",
+      "cves": [
+        {
+          "id": "CVE-2022-31688",
+          "severity": "MEDIUM",
+          "summary": "Denial of service via malformed date strings that cause excessive backtracking in the parser.",
+          "affects_versions": "<2.8.2.post1"
+        }
+      ],
+      "eol": {
+        "is_eol": false,
+        "eol_date": null,
+        "confidence": "high"
+      },
+      "recommendation": "Upgrade to 2.9.0. The CVE is mitigated in 2.8.2.post1+ but upgrading to latest picks up additional hardening and bug fixes.",
+      "urgency": "high",
+      "metadata": {
+        "confidence": "high",
+        "source": "static_analysis",
+        "status": "extracted",
+        "updated_at": "2026-04-09T13:50:00Z",
+        "updated_by": "veripak/0.2.0"
+      }
+    }
+  ],
+  "security_findings": [
+    {
+      "node_ref": "function:/Users/wjackson/Developer/dateutil-example/src/dateutil/parser/_parser.py:325:4:100",
+      "file": "_parser.py",
+      "line": 325,
+      "column": 8,
+      "rule_id": "SC059",
+      "message": "Empty except handler — exception silently swallowed, errors go undetected (CWE-390)",
+      "severity": "medium",
+      "cwe_id": 390,
+      "cwe_name": "Detection of Error Condition Without Action",
+      "compliance": {
+        "owasp_asvs": [
+          {
+            "id": "v5.0.0-16.5.1",
+            "title": "Generic error messages without sensitive data",
+            "level": "L1"
+          }
+        ],
+        "nist_800_53": ["SI-11"],
+        "asd_stig": [
+          {
+            "id": "APSC-DV-002570",
+            "cat": "II",
+            "title": "The application must not disclose unnecessary information in error responses"
+          }
+        ],
+        "pci_dss": ["6.2.4"]
+      },
+      "remediation": "Log the swallowed exception at debug level or re-raise as a specific parser warning so callers can detect partial-parse failures.",
+      "action": "review",
+      "metadata": {
+        "confidence": "high",
+        "source": "static_analysis",
+        "status": "extracted",
+        "assigned_to": "human",
+        "updated_at": "2026-04-09T13:55:00Z",
+        "updated_by": "sanicode/0.3.0",
+        "notes": "Derived severity elevated to high: silent swallowing in a parser that handles untrusted input can mask exploitation of CVE-2022-31688."
+      }
+    },
+    {
+      "node_ref": "function:/Users/wjackson/Developer/dateutil-example/src/dateutil/parser/_parser.py:332:4:101",
+      "file": "_parser.py",
+      "line": 332,
+      "column": 8,
+      "rule_id": "SC059",
+      "message": "Empty except handler — exception silently swallowed, errors go undetected (CWE-390)",
+      "severity": "medium",
+      "cwe_id": 390,
+      "cwe_name": "Detection of Error Condition Without Action",
+      "compliance": {
+        "owasp_asvs": [
+          {
+            "id": "v5.0.0-16.5.1",
+            "title": "Generic error messages without sensitive data",
+            "level": "L1"
+          }
+        ],
+        "nist_800_53": ["SI-11"],
+        "asd_stig": [
+          {
+            "id": "APSC-DV-002570",
+            "cat": "II",
+            "title": "The application must not disclose unnecessary information in error responses"
+          }
+        ],
+        "pci_dss": ["6.2.4"]
+      },
+      "remediation": "Same pattern as line 325 — add logging or convert to explicit pass-with-comment explaining why the exception is intentionally discarded.",
+      "action": "review",
+      "metadata": {
+        "confidence": "high",
+        "source": "static_analysis",
+        "status": "extracted",
+        "assigned_to": "human",
+        "updated_at": "2026-04-09T13:55:00Z",
+        "updated_by": "sanicode/0.3.0"
+      }
+    },
+    {
+      "node_ref": "function:/Users/wjackson/Developer/dateutil-example/src/dateutil/parser/_parser.py:651:4:102",
+      "file": "_parser.py",
+      "line": 651,
+      "column": 39,
+      "rule_id": "SC062",
+      "message": "Error detail exposed in exception handler — may leak implementation details to users (CWE-209)",
+      "severity": "medium",
+      "cwe_id": 209,
+      "cwe_name": "Generation of Error Message Containing Sensitive Information",
+      "remediation": "Sanitize the error message to avoid echoing back raw input tokens. Return a generic parse-failure message and log the detailed error internally.",
+      "action": "review",
+      "metadata": {
+        "confidence": "high",
+        "source": "static_analysis",
+        "status": "extracted",
+        "assigned_to": "human",
+        "updated_at": "2026-04-09T13:55:00Z",
+        "updated_by": "sanicode/0.3.0",
+        "notes": "Derived severity elevated to high: in a web context, echoing malformed input in an exception message can facilitate XSS or information disclosure."
+      }
+    },
+    {
+      "node_ref": "function:/Users/wjackson/Developer/dateutil-example/src/dateutil/parser/_parser.py:223:4:103",
+      "file": "_parser.py",
+      "line": 223,
+      "column": 12,
+      "rule_id": "SC050",
+      "message": "Dynamic resource modification via globals() or setattr() — an attacker-controlled key can override module attributes (CWE-913)",
+      "severity": "high",
+      "cwe_id": 913,
+      "cwe_name": "Improper Control of Dynamically-Managed Code Resources",
+      "remediation": "Replace dynamic attribute assignment with an explicit allowlist of settable attributes. If the dynamic pattern is needed for initialization, validate the key against a known set.",
+      "action": "review",
+      "metadata": {
+        "confidence": "high",
+        "source": "static_analysis",
+        "status": "extracted",
+        "assigned_to": "human",
+        "updated_at": "2026-04-09T13:55:00Z",
+        "updated_by": "sanicode/0.3.0",
+        "notes": "Derived severity medium: the setattr calls are in parserinfo.__init__ and operate on class-internal data, not externally supplied keys. Risk is real but attenuated by the fact that parserinfo is typically instantiated with hardcoded locale data."
+      }
+    },
+    {
+      "node_ref": "function:/Users/wjackson/Developer/dateutil-example/src/dateutil/parser/_parser.py:1429:4:104",
+      "file": "_parser.py",
+      "line": 1429,
+      "column": 28,
+      "rule_id": "SC050",
+      "message": "Dynamic resource modification via globals() or setattr() — an attacker-controlled key can override module attributes (CWE-913)",
+      "severity": "high",
+      "cwe_id": 913,
+      "cwe_name": "Improper Control of Dynamically-Managed Code Resources",
+      "remediation": "Constrain dynamic assignment to a known allowlist of attribute names.",
+      "action": "review",
+      "metadata": {
+        "confidence": "high",
+        "source": "static_analysis",
+        "status": "extracted",
+        "updated_at": "2026-04-09T13:55:00Z",
+        "updated_by": "sanicode/0.3.0"
+      }
+    },
+    {
+      "node_ref": "function:/Users/wjackson/Developer/dateutil-example/src/dateutil/parser/_parser.py:1433:4:105",
+      "file": "_parser.py",
+      "line": 1433,
+      "column": 28,
+      "rule_id": "SC050",
+      "message": "Dynamic resource modification via globals() or setattr() — an attacker-controlled key can override module attributes (CWE-913)",
+      "severity": "high",
+      "cwe_id": 913,
+      "cwe_name": "Improper Control of Dynamically-Managed Code Resources",
+      "remediation": "Constrain dynamic assignment to a known allowlist of attribute names.",
+      "action": "review",
+      "metadata": {
+        "confidence": "high",
+        "source": "static_analysis",
+        "status": "extracted",
+        "updated_at": "2026-04-09T13:55:00Z",
+        "updated_by": "sanicode/0.3.0"
+      }
+    },
+    {
+      "node_ref": "function:/Users/wjackson/Developer/dateutil-example/src/dateutil/parser/_parser.py:1440:4:106",
+      "file": "_parser.py",
+      "line": 1440,
+      "column": 28,
+      "rule_id": "SC050",
+      "message": "Dynamic resource modification via globals() or setattr() — an attacker-controlled key can override module attributes (CWE-913)",
+      "severity": "high",
+      "cwe_id": 913,
+      "cwe_name": "Improper Control of Dynamically-Managed Code Resources",
+      "remediation": "Constrain dynamic assignment to a known allowlist of attribute names.",
+      "action": "review",
+      "metadata": {
+        "confidence": "high",
+        "source": "static_analysis",
+        "status": "extracted",
+        "updated_at": "2026-04-09T13:55:00Z",
+        "updated_by": "sanicode/0.3.0"
+      }
+    }
+  ],
+  "elements": {
+    "mod:dateutil.parser": {
+      "hierarchy_level": "module",
+      "node_ref": "module:/Users/wjackson/Developer/dateutil-example/src/dateutil/parser/__init__.py:1:0:100",
+      "name": "dateutil.parser",
+      "file": "/Users/wjackson/Developer/dateutil-example/src/dateutil/parser/__init__.py",
+      "line": 1,
+      "contract": {
+        "purpose": "Public entry point for dateutil's date/time string parsing. Re-exports the parse() function, parserinfo class, and ParserError exception from the internal _parser module, and the isoparser/isoparse pair from the isoparser module. Consumers import from here rather than reaching into internals.",
+        "invariants": [
+          "The public API surface consists of: parse, parserinfo, ParserError, isoparser, isoparse.",
+          "All parsing is stateless at the module level — no module globals are mutated after import."
+        ],
+        "trust_boundary": {
+          "input_trust": "untrusted",
+          "output_trust": "trusted",
+          "sanitization": "Input strings are validated and parsed into typed datetime objects. Malformed input raises ParserError rather than producing garbage output."
+        }
+      },
+      "metadata": {
+        "confidence": "high",
+        "source": "static_analysis",
+        "status": "extracted",
+        "updated_at": "2026-04-09T14:00:00Z",
+        "updated_by": "treeloom/0.4.0"
+      }
+    },
+    "mod:dateutil.parser._parser": {
+      "hierarchy_level": "module",
+      "node_ref": "module:/Users/wjackson/Developer/dateutil-example/src/dateutil/parser/_parser.py:1:0:200",
+      "name": "dateutil.parser._parser",
+      "parent": "mod:dateutil.parser",
+      "file": "/Users/wjackson/Developer/dateutil-example/src/dateutil/parser/_parser.py",
+      "line": 1,
+      "contract": {
+        "purpose": "Internal implementation of dateutil's general-purpose date/time parser. Contains the parser class (with _parse), the parserinfo configuration class, and the ParserError exception. Not intended for direct import by consumers.",
+        "invariants": [
+          "ParserError is a subclass of ValueError for backward compatibility.",
+          "The default parserinfo uses English locale data (month names, day names, AM/PM indicators)."
+        ]
+      },
+      "data_model": {
+        "entities": [
+          {
+            "name": "_result",
+            "description": "Internal mutable accumulator used during parsing. Holds the parsed year, month, day, hour, minute, second, microsecond, weekday, and timezone offset as they are incrementally resolved from tokens.",
+            "fields": [
+              { "name": "year", "type": "int | None" },
+              { "name": "month", "type": "int | None" },
+              { "name": "day", "type": "int | None" },
+              { "name": "hour", "type": "int | None" },
+              { "name": "minute", "type": "int | None" },
+              { "name": "second", "type": "int | None" },
+              { "name": "microsecond", "type": "int | None" },
+              { "name": "weekday", "type": "int | None" },
+              { "name": "tzname", "type": "str | None" },
+              { "name": "tzoffset", "type": "int | None" }
+            ]
+          },
+          {
+            "name": "ParserError",
+            "description": "Exception raised when a string cannot be parsed. Subclasses ValueError."
+          }
+        ],
+        "relationships": [
+          {
+            "from_entity": "parser",
+            "to_entity": "parserinfo",
+            "cardinality": "1:1",
+            "description": "Each parser instance holds a parserinfo that provides locale-specific parsing rules."
+          },
+          {
+            "from_entity": "parser",
+            "to_entity": "_result",
+            "cardinality": "1:N",
+            "description": "A parser creates a fresh _result for each parse invocation; results are not reused."
+          }
+        ],
+        "lifecycle": "A _result is created at the start of _parse(), populated as tokens are consumed, then converted into a datetime. It does not outlive the parse call."
+      },
+      "metadata": {
+        "confidence": "high",
+        "source": "static_analysis",
+        "status": "extracted",
+        "updated_at": "2026-04-09T14:00:00Z",
+        "updated_by": "treeloom/0.4.0"
+      }
+    },
+    "cls:dateutil.parser._parser.parserinfo": {
+      "hierarchy_level": "class",
+      "node_ref": "class:/Users/wjackson/Developer/dateutil-example/src/dateutil/parser/_parser.py:241:0:200",
+      "name": "parserinfo",
+      "parent": "mod:dateutil.parser._parser",
+      "file": "/Users/wjackson/Developer/dateutil-example/src/dateutil/parser/_parser.py",
+      "line": 241,
+      "contract": {
+        "purpose": "Configuration class that supplies locale-specific data to the parser: month names, day names, HMS indicators, AM/PM strings, timezone offsets, and two-digit year windowing. Users subclass parserinfo to support non-English locales or custom parsing rules.",
+        "preconditions": [
+          "If dayfirst or yearfirst are passed to __init__, they must be boolean."
+        ],
+        "postconditions": [
+          "After construction, all lookup methods (jump, weekday, month, hms, ampm, pertain, tzoffset) return consistent results for the configured locale."
+        ],
+        "invariants": [
+          "Lookup data is immutable after __init__ completes.",
+          "convertyear() maps two-digit years to a 100-year window centered on the current year."
+        ],
+        "side_effects": [
+          "None — parserinfo is a pure data object after initialization."
+        ],
+        "error_conditions": [
+          {
+            "condition": "Subclass provides inconsistent data (e.g. duplicate month name mappings)",
+            "behavior": "Last-write-wins in the internal dict; no error raised. This is a design weakness.",
+            "severity": "advisory"
+          }
+        ]
+      },
+      "data_model": {
+        "entities": [
+          {
+            "name": "parserinfo",
+            "description": "Locale configuration for the date parser.",
+            "fields": [
+              { "name": "JUMP", "type": "list[str]", "constraints": "Whitespace and punctuation tokens to skip" },
+              { "name": "WEEKDAYS", "type": "list[tuple[str, ...]]", "constraints": "Each tuple is (abbreviated, full) for a day" },
+              { "name": "MONTHS", "type": "list[tuple[str, ...]]", "constraints": "Each tuple is (abbreviated, full) for a month" },
+              { "name": "HMS", "type": "list[tuple[str, ...]]", "constraints": "Hour/minute/second indicator words" },
+              { "name": "AMPM", "type": "list[tuple[str, ...]]", "constraints": "AM/PM indicator words" },
+              { "name": "PERTAIN", "type": "list[str]", "constraints": "Words like 'of' connecting date components" },
+              { "name": "TZOFFSET", "type": "dict[str, int]", "constraints": "Timezone name to UTC offset in seconds" },
+              { "name": "dayfirst", "type": "bool" },
+              { "name": "yearfirst", "type": "bool" }
+            ]
+          }
+        ]
+      },
+      "notes": "The setattr-based initialization (flagged by SC050 findings) is used to build the lookup tables from the class-level JUMP/WEEKDAYS/MONTHS/etc. constants. While technically dynamic, the keys are always from hardcoded class data, not user input.",
+      "metadata": {
+        "confidence": "high",
+        "source": "static_analysis",
+        "status": "extracted",
+        "updated_at": "2026-04-09T14:00:00Z",
+        "updated_by": "treeloom/0.4.0"
+      }
+    },
+    "fn:dateutil.parser/parse": {
+      "hierarchy_level": "function",
+      "node_ref": "function:/Users/wjackson/Developer/dateutil-example/src/dateutil/parser/__init__.py:30:0:100",
+      "name": "parse",
+      "parent": "mod:dateutil.parser",
+      "file": "/Users/wjackson/Developer/dateutil-example/src/dateutil/parser/__init__.py",
+      "line": 30,
+      "contract": {
+        "purpose": "Parse a string in virtually any date/time format and return a datetime object. This is the primary public API of dateutil.parser. Supports ISO 8601, RFC 2822, and a wide range of natural-language date formats. Delegates to the internal parser class for the actual work.",
+        "preconditions": [
+          "timestr must be a string (str). Passing bytes or other types raises TypeError.",
+          "If parserinfo is provided, it must be a parserinfo instance or subclass."
+        ],
+        "postconditions": [
+          "Returns a datetime.datetime object representing the parsed date/time.",
+          "If fuzzy_with_tokens=True, returns a tuple of (datetime, tuple_of_skipped_tokens) instead.",
+          "Missing date components are filled from the 'default' kwarg (which defaults to datetime.now() with time fields zeroed)."
+        ],
+        "invariants": [
+          "The function is stateless — repeated calls with the same input produce the same output.",
+          "A new parser instance is created for each call unless a parserinfo is cached."
+        ],
+        "side_effects": [
+          "None. Pure function."
+        ],
+        "error_conditions": [
+          {
+            "condition": "timestr cannot be parsed into a valid date/time",
+            "behavior": "Raises ParserError (subclass of ValueError) with a message describing the failure.",
+            "severity": "recoverable"
+          },
+          {
+            "condition": "timestr is empty or consists only of whitespace",
+            "behavior": "Raises ParserError.",
+            "severity": "recoverable"
+          },
+          {
+            "condition": "Adversarial input crafted to trigger excessive backtracking (CVE-2022-31688)",
+            "behavior": "In unpatched versions, hangs or consumes excessive CPU. Patched versions raise ParserError within bounded time.",
+            "severity": "fatal"
+          }
+        ],
+        "trust_boundary": {
+          "input_trust": "untrusted",
+          "output_trust": "trusted",
+          "sanitization": "Tokenizes and validates each component of the input string. Does not execute or eval any part of the input. Output is a fully typed datetime — no raw string fragments leak through."
+        },
+        "thread_safety": "Thread-safe. No shared mutable state. A new parser instance is created per call.",
+        "performance": "O(n) in the length of the input string for well-formed input. Pathological inputs in unpatched versions can exhibit O(n^k) backtracking."
+      },
+      "metadata": {
+        "confidence": "medium",
+        "source": "llm_inference",
+        "status": "needs_review",
+        "assigned_to": "human",
+        "updated_at": "2026-04-09T14:00:00Z",
+        "updated_by": "spec-extractor/0.1.0",
+        "notes": "Behavioral contract inferred from docstrings, source analysis, and CVE advisory. The precondition about bytes input and the performance note about patched vs unpatched behavior should be verified against the actual test suite."
+      }
+    },
+    "fn:dateutil.parser._parser.parser/_parse": {
+      "hierarchy_level": "function",
+      "node_ref": "function:/Users/wjackson/Developer/dateutil-example/src/dateutil/parser/_parser.py:666:4:200",
+      "name": "_parse",
+      "parent": "cls:dateutil.parser._parser.parser",
+      "file": "/Users/wjackson/Developer/dateutil-example/src/dateutil/parser/_parser.py",
+      "line": 666,
+      "contract": {
+        "purpose": "Core parsing engine. Tokenizes the input string, iterates over tokens matching them against numeric patterns (year/month/day/hour/minute/second), named patterns (month names, day names, timezone abbreviations, AM/PM), and punctuation. Uses heuristics controlled by dayfirst/yearfirst to disambiguate ambiguous numeric sequences like '01/02/03'. Returns a tuple of (parsed _result, remaining unmatched tokens).",
+        "preconditions": [
+          "timestr must be a string.",
+          "self.info must be a valid parserinfo instance (set during parser.__init__)."
+        ],
+        "postconditions": [
+          "Returns (res, skipped_tokens) where res is a _result namedtuple-like with year/month/day/etc. fields populated to the extent they could be resolved.",
+          "If fuzzy=False and tokens remain unmatched, raises ParserError.",
+          "If fuzzy=True, unmatched tokens are collected in the skipped_tokens tuple."
+        ],
+        "invariants": [
+          "Token processing is single-pass, left to right.",
+          "Disambiguation of ambiguous dates is deterministic given the same dayfirst/yearfirst settings."
+        ],
+        "side_effects": [
+          "None. The _result object is created internally and returned; no external state is mutated."
+        ],
+        "error_conditions": [
+          {
+            "condition": "No date components found in the token stream",
+            "behavior": "Raises ParserError with a message including the original string (CWE-209 flagged by SC062).",
+            "severity": "recoverable"
+          },
+          {
+            "condition": "Ambiguous date that cannot be resolved by heuristics",
+            "behavior": "Falls back to month-day-year ordering (US convention) when neither dayfirst nor yearfirst is set.",
+            "severity": "advisory"
+          }
+        ],
+        "trust_boundary": {
+          "input_trust": "untrusted",
+          "output_trust": "trusted",
+          "sanitization": "Tokenization splits input into discrete tokens. Each token is matched against known patterns — no eval, no dynamic code execution. However, the error path at line 651 echoes raw input in the exception message (SC062 finding)."
+        },
+        "performance": "Single-pass O(n) tokenization followed by O(n) matching. Pathological inputs in older versions could trigger quadratic behavior in the token-matching loop."
+      },
+      "metadata": {
+        "confidence": "medium",
+        "source": "llm_inference",
+        "status": "needs_review",
+        "assigned_to": "human",
+        "updated_at": "2026-04-09T14:00:00Z",
+        "updated_by": "spec-extractor/0.1.0",
+        "notes": "The disambiguation heuristic (dayfirst/yearfirst fallback behavior) is complex and locale-sensitive. Confirm the exact fallback order against test_parser.py."
+      }
+    },
+    "cls:dateutil.parser._parser.parser": {
+      "hierarchy_level": "class",
+      "node_ref": "class:/Users/wjackson/Developer/dateutil-example/src/dateutil/parser/_parser.py:620:0:200",
+      "name": "parser",
+      "parent": "mod:dateutil.parser._parser",
+      "file": "/Users/wjackson/Developer/dateutil-example/src/dateutil/parser/_parser.py",
+      "line": 620,
+      "contract": {
+        "purpose": "Stateful parser class that holds a parserinfo instance and exposes parse() and _parse() methods. Typically instantiated once per call to the module-level parse() function, though it can be reused if the same parserinfo is desired across multiple parse calls.",
+        "preconditions": [
+          "If info is provided to __init__, it must be a parserinfo instance."
+        ],
+        "postconditions": [
+          "After construction, self.info is a valid parserinfo (uses default if none provided)."
+        ],
+        "invariants": [
+          "The parser does not mutate its parserinfo after construction."
+        ],
+        "side_effects": [
+          "None."
+        ]
+      },
+      "metadata": {
+        "confidence": "high",
+        "source": "static_analysis",
+        "status": "extracted",
+        "updated_at": "2026-04-09T14:00:00Z",
+        "updated_by": "treeloom/0.4.0"
+      }
+    },
+    "cls:dateutil.parser.isoparser": {
+      "hierarchy_level": "class",
+      "node_ref": "class:/Users/wjackson/Developer/dateutil-example/src/dateutil/parser/isoparser.py:12:0:100",
+      "name": "isoparser",
+      "parent": "mod:dateutil.parser",
+      "file": "/Users/wjackson/Developer/dateutil-example/src/dateutil/parser/isoparser.py",
+      "line": 12,
+      "contract": {
+        "purpose": "Strict ISO 8601 parser. Unlike the general-purpose parse() function, isoparser only accepts strings conforming to ISO 8601 and rejects ambiguous or locale-dependent formats. Faster and more predictable than the general parser for ISO-compliant input.",
+        "preconditions": [
+          "Input must be a string or bytes conforming to ISO 8601.",
+          "If sep is provided to __init__, it must be a single ASCII character used as the date-time separator (default 'T')."
+        ],
+        "postconditions": [
+          "isoparse() returns a datetime.datetime for datetime strings.",
+          "parse_isodate() returns a datetime.date.",
+          "parse_isotime() returns a datetime.time.",
+          "parse_tzstr() returns a tzinfo object."
+        ],
+        "invariants": [
+          "Rejects any input that does not conform to ISO 8601. No heuristic guessing.",
+          "Byte string input is decoded as ASCII."
+        ],
+        "side_effects": [
+          "None."
+        ],
+        "error_conditions": [
+          {
+            "condition": "Input does not conform to ISO 8601",
+            "behavior": "Raises ValueError with a descriptive message.",
+            "severity": "recoverable"
+          },
+          {
+            "condition": "sep is not a single character",
+            "behavior": "Raises ValueError at construction time.",
+            "severity": "recoverable"
+          }
+        ],
+        "trust_boundary": {
+          "input_trust": "untrusted",
+          "output_trust": "trusted",
+          "sanitization": "Strict format validation. Character-by-character parsing with no backtracking — immune to the DoS class of CVE-2022-31688."
+        },
+        "performance": "O(n) with small constant factor. No backtracking. Significantly faster than the general parser for ISO 8601 input."
+      },
+      "metadata": {
+        "confidence": "medium",
+        "source": "llm_inference",
+        "status": "needs_review",
+        "assigned_to": "human",
+        "updated_at": "2026-04-09T14:00:00Z",
+        "updated_by": "spec-extractor/0.1.0",
+        "notes": "The isoparser is a safer and faster alternative when input is known to be ISO 8601. Translation targets should prefer the target language's native ISO 8601 parser if one exists."
+      }
+    }
+  },
+  "usage_paths": [
+    {
+      "id": "path:parse-call-chain",
+      "name": "Public parse() call chain",
+      "description": "The standard path from the public API through to datetime construction. parse() instantiates a parser with parserinfo, calls its parse() method, which calls _parse() to tokenize and match, then assembles the datetime from the _result.",
+      "path_type": "call_chain",
+      "nodes": [
+        "fn:dateutil.parser/parse",
+        "cls:dateutil.parser._parser.parser",
+        "cls:dateutil.parser._parser.parserinfo",
+        "fn:dateutil.parser._parser.parser/_parse"
+      ],
+      "metadata": {
+        "confidence": "high",
+        "source": "static_analysis",
+        "status": "extracted",
+        "updated_at": "2026-04-09T14:00:00Z",
+        "updated_by": "treeloom/0.4.0",
+        "notes": "Resolved from CPG call edges. The 34% call resolution rate means some indirect calls within _parse (e.g. to parserinfo lookup methods) are not captured in the CPG but are confirmed by source inspection."
+      }
+    }
+  ]
+}

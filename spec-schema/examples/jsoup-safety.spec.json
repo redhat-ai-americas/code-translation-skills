@@ -1,0 +1,353 @@
+{
+  "meta": {
+    "project_name": "jsoup",
+    "spec_version": "0.1.0",
+    "source_language": "java",
+    "source_version": "11",
+    "created_at": "2026-04-09T10:15:00Z",
+    "updated_at": "2026-04-09T11:42:00Z",
+    "tools": {
+      "treeloom": "0.4.0",
+      "veripak": "0.2.1",
+      "claude-code": "1.0.25"
+    }
+  },
+  "cpg_ref": {
+    "path": "../jsoup-example/cpg.json",
+    "sha256": "a3f8c1d4e7b2094f6538a1c90d7e4b2f1a8c3d5e6f7094b2c1d3e5a8f90b4c7d",
+    "built_at": "2026-04-09T09:58:00Z",
+    "treeloom_version": "0.4.0",
+    "stats": {
+      "nodes": 19981,
+      "edges": 53517,
+      "files": 91,
+      "functions": 2101,
+      "call_resolution_pct": 85
+    }
+  },
+  "ecosystem_dependencies": [
+    {
+      "package": "jsoup",
+      "ecosystem": "java",
+      "version_in_use": "1.18.1",
+      "latest_version": "1.21.1",
+      "cves": [
+        {
+          "id": "CVE-2023-48648",
+          "severity": "HIGH",
+          "summary": "Denial of service via resource leaks in HTML parsing. Crafted input can cause unbounded memory allocation during parse.",
+          "affects_versions": "<1.17.1"
+        }
+      ],
+      "eol": {
+        "is_eol": false,
+        "eol_date": null,
+        "confidence": "high"
+      },
+      "recommendation": "Upgrade to 1.21.1 to resolve CVE-2023-48648 and pick up performance improvements in the parser and safety modules.",
+      "urgency": "immediate",
+      "metadata": {
+        "confidence": "high",
+        "source": "static_analysis",
+        "status": "extracted",
+        "updated_at": "2026-04-09T10:20:00Z",
+        "updated_by": "veripak/0.2.1"
+      }
+    }
+  ],
+  "elements": {
+    "mod:org.jsoup.safety.Cleaner": {
+      "hierarchy_level": "module",
+      "node_ref": "module:/Users/wjackson/Developer/jsoup-example/src/main/java/org/jsoup/safety/Cleaner.java:1:0:16499",
+      "name": "org.jsoup.safety.Cleaner",
+      "file": "src/main/java/org/jsoup/safety/Cleaner.java",
+      "line": 1,
+      "contract": {
+        "purpose": "HTML sanitization module. Contains the Cleaner class, which traverses an untrusted HTML document and produces a new document containing only elements and attributes permitted by a configurable Safelist. This is jsoup's primary defense against stored XSS when accepting user-supplied HTML.",
+        "trust_boundary": {
+          "input_trust": "untrusted",
+          "output_trust": "trusted",
+          "sanitization": "Strips all elements, attributes, and protocols not explicitly allowed by the Safelist. Enforces required attributes (e.g. rel=nofollow on links)."
+        }
+      },
+      "data_model": {
+        "entities": [
+          {
+            "name": "Cleaner",
+            "description": "Stateless sanitizer bound to a single Safelist instance. Provides clean(Document) and isValid(Document) entry points.",
+            "fields": [
+              { "name": "safelist", "type": "Safelist", "constraints": "non-null, set at construction time, immutable reference" }
+            ]
+          },
+          {
+            "name": "Safelist",
+            "description": "Allowlist configuration defining which HTML elements, attributes, and URI protocols are permitted. Provides factory presets (none, simpleText, basic, basicWithImages, relaxed).",
+            "fields": [
+              { "name": "tagNames", "type": "Set<TagName>", "constraints": "allowed tag names" },
+              { "name": "attributes", "type": "Map<TagName, Set<AttributeKey>>", "constraints": "per-tag allowed attributes" },
+              { "name": "enforcedAttributes", "type": "Map<TagName, Map<AttributeKey, AttributeValue>>", "constraints": "attributes forced onto output elements" },
+              { "name": "protocols", "type": "Map<TagName, Map<AttributeKey, Set<Protocol>>>", "constraints": "allowed URI protocols per attribute" }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "from_entity": "Cleaner",
+            "to_entity": "Safelist",
+            "cardinality": "1:1",
+            "description": "Each Cleaner holds exactly one Safelist, set at construction."
+          }
+        ],
+        "lifecycle": "Cleaner is constructed with a Safelist, used to clean or validate one or more Documents, then discarded. The Safelist is typically built once (via factory method or builder chain) and shared across Cleaner instances."
+      },
+      "metadata": {
+        "confidence": "high",
+        "source": "static_analysis",
+        "status": "extracted",
+        "updated_at": "2026-04-09T10:25:00Z",
+        "updated_by": "treeloom/0.4.0"
+      }
+    },
+    "cls:org.jsoup.safety.Cleaner": {
+      "hierarchy_level": "class",
+      "node_ref": "class:/Users/wjackson/Developer/jsoup-example/src/main/java/org/jsoup/safety/Cleaner.java:39:0:16513",
+      "name": "Cleaner",
+      "parent": "mod:org.jsoup.safety.Cleaner",
+      "file": "src/main/java/org/jsoup/safety/Cleaner.java",
+      "line": 39,
+      "contract": {
+        "purpose": "Sanitizes an untrusted HTML Document by walking its DOM tree and copying only safe nodes into a new Document, as determined by a Safelist. Cleaner instances are reusable across multiple documents.",
+        "invariants": [
+          "The safelist field is non-null and does not change after construction.",
+          "Cleaning never modifies the input document."
+        ],
+        "thread_safety": "Cleaner instances are thread-safe for concurrent clean()/isValid() calls provided the Safelist is not mutated after construction. Safelist's builder methods (addTags, addAttributes, etc.) are not synchronized."
+      },
+      "metadata": {
+        "confidence": "medium",
+        "source": "llm_inference",
+        "status": "needs_review",
+        "assigned_to": "human",
+        "updated_at": "2026-04-09T11:00:00Z",
+        "updated_by": "claude-code/opus-4",
+        "notes": "Thread-safety claim inferred from code structure (no mutable instance state beyond Safelist ref). Needs confirmation from maintainers or a concurrency test."
+      }
+    },
+    "fn:org.jsoup.safety.Cleaner/clean": {
+      "hierarchy_level": "function",
+      "node_ref": "function:/Users/wjackson/Developer/jsoup-example/src/main/java/org/jsoup/safety/Cleaner.java:58:4:16518",
+      "name": "clean(Document)",
+      "parent": "cls:org.jsoup.safety.Cleaner",
+      "file": "src/main/java/org/jsoup/safety/Cleaner.java",
+      "line": 58,
+      "contract": {
+        "purpose": "Produces a sanitized copy of the input document. Creates a new empty Document shell using the dirty document's baseUri, copies only safe nodes from dirty.body() into clean.body() via copySafeNodes, clones the dirty document's OutputSettings into the clean document, and returns the clean document.",
+        "preconditions": [
+          "dirtyDocument must not be null (enforced by Validate.notNull)."
+        ],
+        "postconditions": [
+          "Returned Document contains only elements and attributes allowed by the Safelist.",
+          "Returned Document's baseUri matches the input document's baseUri.",
+          "Returned Document's OutputSettings match the input document's OutputSettings."
+        ],
+        "side_effects": [
+          "None. Creates and returns a new Document; does not modify the input."
+        ],
+        "error_conditions": [
+          {
+            "condition": "dirtyDocument is null",
+            "behavior": "Throws IllegalArgumentException via Validate.notNull.",
+            "severity": "fatal"
+          }
+        ],
+        "trust_boundary": {
+          "input_trust": "untrusted",
+          "output_trust": "trusted",
+          "sanitization": "Traverses the dirty DOM tree. For each element, checks isSafeTag against the Safelist. Safe elements are shallow-copied with their attributes filtered through isSafeAttribute. URLs are made absolute where the Safelist requires it. Enforced attributes (e.g. rel=nofollow) are applied. Text and data nodes are copied only under safe parent elements."
+        },
+        "performance": "O(n) in the number of DOM nodes in the dirty document. One full tree traversal via NodeVisitor."
+      },
+      "metadata": {
+        "confidence": "medium",
+        "source": "llm_inference",
+        "status": "needs_review",
+        "assigned_to": "human",
+        "updated_at": "2026-04-09T11:10:00Z",
+        "updated_by": "claude-code/opus-4",
+        "notes": "Behavioral contract inferred by reading source. Postconditions about completeness of sanitization depend on Safelist correctness."
+      }
+    },
+    "fn:org.jsoup.safety.Cleaner/isValid": {
+      "hierarchy_level": "function",
+      "node_ref": "function:/Users/wjackson/Developer/jsoup-example/src/main/java/org/jsoup/safety/Cleaner.java:90:4:16531",
+      "name": "isValid(Document)",
+      "parent": "cls:org.jsoup.safety.Cleaner",
+      "file": "src/main/java/org/jsoup/safety/Cleaner.java",
+      "line": 90,
+      "contract": {
+        "purpose": "Tests whether a document is already clean according to the Safelist, without modifying it. Runs the same cleaning traversal as clean() but returns a boolean: true if zero elements were discarded and the head section is empty.",
+        "preconditions": [
+          "dirtyDocument must not be null (enforced by Validate.notNull)."
+        ],
+        "postconditions": [
+          "Returns true if and only if every element in the document body is allowed by the Safelist and the document head is empty.",
+          "The input document is not modified."
+        ],
+        "side_effects": [
+          "None."
+        ],
+        "error_conditions": [
+          {
+            "condition": "dirtyDocument is null",
+            "behavior": "Throws IllegalArgumentException via Validate.notNull.",
+            "severity": "fatal"
+          }
+        ],
+        "performance": "O(n) in the number of DOM nodes. Same traversal cost as clean()."
+      },
+      "metadata": {
+        "confidence": "medium",
+        "source": "llm_inference",
+        "status": "needs_review",
+        "assigned_to": "human",
+        "updated_at": "2026-04-09T11:15:00Z",
+        "updated_by": "claude-code/opus-4"
+      }
+    },
+    "fn:org.jsoup.safety.Cleaner/copySafeNodes": {
+      "hierarchy_level": "function",
+      "node_ref": "function:/Users/wjackson/Developer/jsoup-example/src/main/java/org/jsoup/safety/Cleaner.java:178:4:16622",
+      "name": "copySafeNodes(Element, Element)",
+      "parent": "cls:org.jsoup.safety.Cleaner",
+      "file": "src/main/java/org/jsoup/safety/Cleaner.java",
+      "line": 178,
+      "contract": {
+        "purpose": "Core sanitization loop. Traverses the source element's subtree using a CleaningVisitor (NodeVisitor pattern) and copies safe nodes into the destination element. For each Element node: checks safelist.isSafeTag() and creates a safe copy if allowed, discards otherwise. TextNodes are copied directly. DataNodes are copied only if their parent tag is safe.",
+        "preconditions": [
+          "source and dest must be non-null Element instances.",
+          "dest should be an empty element in the clean document's body."
+        ],
+        "postconditions": [
+          "dest contains sanitized copies of all safe descendants from source.",
+          "Returns the count of discarded (unsafe) nodes."
+        ],
+        "side_effects": [
+          "Mutates dest by appending child nodes. Does not modify source."
+        ],
+        "performance": "O(n) where n is the number of nodes in the source subtree. Single-pass traversal."
+      },
+      "metadata": {
+        "confidence": "medium",
+        "source": "llm_inference",
+        "status": "needs_review",
+        "assigned_to": "human",
+        "updated_at": "2026-04-09T11:20:00Z",
+        "updated_by": "claude-code/opus-4"
+      }
+    },
+    "fn:org.jsoup.safety.Cleaner/createSafeElement": {
+      "hierarchy_level": "function",
+      "node_ref": "function:/Users/wjackson/Developer/jsoup-example/src/main/java/org/jsoup/safety/Cleaner.java:184:4:16615",
+      "name": "createSafeElement(Element)",
+      "parent": "cls:org.jsoup.safety.Cleaner",
+      "file": "src/main/java/org/jsoup/safety/Cleaner.java",
+      "line": 184,
+      "contract": {
+        "purpose": "Creates a sanitized copy of a single source element. Shallow-clones the element, filters its attributes through safelist.isSafeAttribute(), makes URLs absolute where safelist.shouldAbsUrl() requires it, and applies enforced attributes from safelist.getEnforcedAttributes(). Special-cases <a> tags: skips adding rel=nofollow for same-site links.",
+        "preconditions": [
+          "sourceEl must be a non-null Element whose tag has already been verified as safe by the caller."
+        ],
+        "postconditions": [
+          "Returned ElementMeta contains a new Element with only Safelist-permitted attributes, absolute URLs where required, and all enforced attributes applied.",
+          "Original sourceEl is not modified."
+        ],
+        "side_effects": [
+          "None."
+        ],
+        "error_conditions": [
+          {
+            "condition": "sourceEl has no attributes",
+            "behavior": "Returns element with only enforced attributes. Not an error.",
+            "severity": "advisory"
+          }
+        ],
+        "trust_boundary": {
+          "input_trust": "untrusted",
+          "output_trust": "trusted",
+          "sanitization": "Filters attributes against Safelist allowlist. Resolves relative URLs to absolute. Enforces security attributes (e.g. rel=nofollow on external links). This is the innermost sanitization boundary in the cleaning pipeline."
+        }
+      },
+      "notes": "The rel=nofollow special case for same-site links is worth preserving in any translation -- it prevents nofollow from being applied to internal navigation links, which would harm SEO.",
+      "metadata": {
+        "confidence": "medium",
+        "source": "llm_inference",
+        "status": "needs_review",
+        "assigned_to": "human",
+        "updated_at": "2026-04-09T11:25:00Z",
+        "updated_by": "claude-code/opus-4",
+        "notes": "The nofollow special case is a subtle business rule easily missed during translation."
+      }
+    },
+    "cls:org.jsoup.safety.Safelist": {
+      "hierarchy_level": "class",
+      "node_ref": "class:/Users/wjackson/Developer/jsoup-example/src/main/java/org/jsoup/safety/Safelist.java:72:0",
+      "name": "Safelist",
+      "parent": "mod:org.jsoup.safety.Cleaner",
+      "file": "src/main/java/org/jsoup/safety/Safelist.java",
+      "line": 72,
+      "contract": {
+        "purpose": "Configurable allowlist defining which HTML elements, attributes, and URI protocols are permitted during sanitization. Provides five factory presets (none, simpleText, basic, basicWithImages, relaxed) covering common use cases, plus a builder API for custom configurations. Used by Cleaner to make per-node allow/deny decisions.",
+        "invariants": [
+          "Once passed to a Cleaner, the Safelist should be treated as immutable. Builder methods (addTags, addAttributes, addProtocols, etc.) mutate internal state without synchronization."
+        ],
+        "thread_safety": "Not thread-safe for mutation. Thread-safe for read-only use after construction is complete (all query methods -- isSafeTag, isSafeAttribute, etc. -- are pure reads against the internal Sets and Maps)."
+      },
+      "data_model": {
+        "entities": [
+          {
+            "name": "Safelist",
+            "description": "The allowlist configuration itself, composed of four collections governing what HTML is permitted.",
+            "fields": [
+              { "name": "tagNames", "type": "Set<TagName>", "constraints": "Lowercase tag names. Empty means deny all elements." },
+              { "name": "attributes", "type": "Map<TagName, Set<AttributeKey>>", "constraints": "Per-tag attribute allowlist. Key ':all' applies to every tag." },
+              { "name": "enforcedAttributes", "type": "Map<TagName, Map<AttributeKey, AttributeValue>>", "constraints": "Attributes forcibly set on output elements (e.g. rel=nofollow on <a>)." },
+              { "name": "protocols", "type": "Map<TagName, Map<AttributeKey, Set<Protocol>>>", "constraints": "Allowed URI schemes per attribute. Empty set means allow any protocol." },
+              { "name": "preserveRelativeLinks", "type": "boolean", "constraints": "Default false. When true, skips URL absolutization." }
+            ]
+          }
+        ],
+        "lifecycle": "Typically created via a factory method (e.g. Safelist.basic()), optionally customized via builder chain (addTags, addAttributes, etc.), then passed to a Cleaner. Should not be mutated after being shared with a Cleaner."
+      },
+      "metadata": {
+        "confidence": "medium",
+        "source": "llm_inference",
+        "status": "needs_review",
+        "assigned_to": "human",
+        "updated_at": "2026-04-09T11:30:00Z",
+        "updated_by": "claude-code/opus-4",
+        "notes": "Field list derived from reading Safelist source. The ':all' pseudo-tag for global attributes is a key semantic detail for translation."
+      }
+    }
+  },
+  "usage_paths": [
+    {
+      "id": "path:sanitization-flow",
+      "name": "HTML sanitization pipeline",
+      "description": "The primary call chain for sanitizing untrusted HTML. Enters via the public Jsoup.clean() convenience method, flows through Cleaner construction and the clean/copySafeNodes/createSafeElement pipeline, and exits with a trusted Document.",
+      "path_type": "call_chain",
+      "nodes": [
+        "fn:org.jsoup.safety.Cleaner/clean",
+        "fn:org.jsoup.safety.Cleaner/copySafeNodes",
+        "fn:org.jsoup.safety.Cleaner/createSafeElement"
+      ],
+      "metadata": {
+        "confidence": "high",
+        "source": "static_analysis",
+        "status": "extracted",
+        "updated_at": "2026-04-09T11:35:00Z",
+        "updated_by": "treeloom/0.4.0",
+        "notes": "Call chain confirmed by CPG edge resolution. The entry point in user code is typically Jsoup.clean(String, Safelist), which parses the string then delegates to this chain."
+      }
+    }
+  ]
+}
