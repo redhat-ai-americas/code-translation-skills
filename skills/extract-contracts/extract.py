@@ -85,6 +85,8 @@ def parse_args() -> argparse.Namespace:
                         help="Max methods per class group before splitting (default: 6).")
     parser.add_argument("--concurrency", type=int, default=4,
                         help="Max parallel LLM calls (default: 4; currently sequential).")
+    parser.add_argument("--skip-existing", action="store_true",
+                        help="Skip elements that already have a non-empty contract.")
     return parser.parse_args()
 
 
@@ -94,6 +96,12 @@ def parse_args() -> argparse.Namespace:
 def load_spec(path: str) -> dict:
     with open(path) as f:
         return json.load(f)
+
+
+def save_spec(path: str, spec: dict) -> None:
+    with open(path, "w") as f:
+        json.dump(spec, f, indent=2)
+        f.write("\n")
 
 
 # --Scope filtering
@@ -124,7 +132,14 @@ def filter_elements(elements: dict, scope: str) -> dict:
 # --Element grouping
 # --
 
-def group_elements(elements: dict, max_group_size: int = 6) -> list[dict]:
+def _has_contract(elem: dict) -> bool:
+    """Return True if the element already has a non-empty contract dict."""
+    contract = elem.get("contract")
+    return isinstance(contract, dict) and len(contract) > 0
+
+
+def group_elements(elements: dict, max_group_size: int = 6,
+                   skip_existing: bool = False) -> list[dict]:
     """Group class methods with their parent class.
 
     Each group is one of:
@@ -138,6 +153,9 @@ def group_elements(elements: dict, max_group_size: int = 6) -> list[dict]:
     Classes with more than max_group_size methods are split: the class itself
     becomes a single, and each method becomes a single. This keeps prompts
     small enough for remote LLM endpoints.
+
+    When skip_existing is True, singles with existing contracts are dropped,
+    and class groups where ALL members already have contracts are dropped.
     """
     class_members: dict[str, list[str]] = {}  # class_id -> [method_ids]
     class_ids: set[str] = set()
@@ -181,6 +199,18 @@ def group_elements(elements: dict, max_group_size: int = 6) -> list[dict]:
         if eid in class_ids or eid in grouped_methods:
             continue
         groups.append({"type": "single", "element_id": eid})
+
+    if skip_existing:
+        filtered = []
+        for g in groups:
+            if g["type"] == "single":
+                if _has_contract(elements[g["element_id"]]):
+                    continue
+            elif g["type"] == "class":
+                if all(_has_contract(elements[eid]) for eid in g["all_ids"]):
+                    continue
+            filtered.append(g)
+        groups = filtered
 
     return groups
 
@@ -604,11 +634,17 @@ def main() -> None:
         in_scope = elements
         print(f"Full scope: {len(in_scope)} elements")
 
-    groups = group_elements(in_scope, max_group_size=args.max_group_size)
+    all_groups = group_elements(in_scope, max_group_size=args.max_group_size,
+                                skip_existing=False)
+    groups = group_elements(in_scope, max_group_size=args.max_group_size,
+                            skip_existing=args.skip_existing)
+    n_skipped = len(all_groups) - len(groups)
     n_class = sum(1 for g in groups if g["type"] == "class")
     n_single = sum(1 for g in groups if g["type"] == "single")
     print(f"Grouped into {len(groups)} extraction units "
           f"({n_class} class groups, {n_single} singles)")
+    if n_skipped:
+        print(f"Skipped {n_skipped} groups with existing contracts")
 
     if args.dry_run:
         for g in groups:
@@ -638,15 +674,15 @@ def main() -> None:
                 print(f"ok ({s} extracted)")
             else:
                 print(f"partial ({s} ok, {f} failed)")
+            if s > 0:
+                save_spec(args.spec, spec)
         except Exception as exc:
             n = len(group.get("all_ids", [group.get("element_id")]))
             total_fail += n
             all_errors.append(f"{label}: {exc}")
             print(f"FAILED: {exc}")
 
-    with open(args.spec, "w") as fh:
-        json.dump(spec, fh, indent=2)
-        fh.write("\n")
+    save_spec(args.spec, spec)
 
     print(f"\nDone. {total_success} contracts extracted, {total_fail} failures.")
     if all_errors:
