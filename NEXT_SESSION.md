@@ -43,6 +43,12 @@ After fixing: parserinfo description went from wrong ("stores year, month, day..
 
 ## What's next
 
+### Prerequisites (do these first)
+
+1. **Rebuild CPGs with treeloom 0.9.0+ and `--include-source`** (#35). The dateutil CPG was built with treeloom 0.7.0, which doesn't honor `--include-source` — all 8,039 nodes have zero source text. The installed treeloom is 0.7.0 despite M1 notes saying "rebuilt with 0.9.0." Upgrade treeloom, rebuild both dateutil and jsoup CPGs, rebuild greploom indexes. Then re-run extract-contracts to measure quality with source-populated CPGs.
+
+2. **Verify LLM endpoints are still responding.** The mcp-rhoai cluster sandbox may have been recycled. Quick check: `curl -s <endpoint>/v1/models`.
+
 ### Remaining M2 work
 
 1. **extract-intent** — business rules, domain logic, state lifecycle, the "why" behind structures. Per the roadmap, this is the second M2 skill.
@@ -54,10 +60,20 @@ After fixing: parserinfo description went from wrong ("stores year, month, day..
    - Consider a two-pass approach: extract basic contract first, then a refinement pass for invariants and trust boundaries
    - Handle module-level elements differently (aggregate info from child elements)
 
-4. **vLLM timeout mitigation**:
+4. **vLLM timeout mitigation** (#34):
    - Try the gpt-oss-20b replica endpoint for load balancing
    - Truncate greploom context to a token budget (e.g. 6000 tokens)
    - Consider using the 8B model for large elements (faster generation)
+   - Check OpenShift route timeout annotations
+
+### Open issues from this session
+
+| Issue | Repo | What |
+|-------|------|------|
+| #33 | code-translation-skills | Unit tests for extract.py and compare.py |
+| #34 | code-translation-skills | vLLM connection drops investigation |
+| #35 | code-translation-skills | Rebuild CPGs with treeloom 0.9.0+ |
+| rdwj/greploom#30 | rdwj/greploom | Query JSON field naming improvement |
 
 ### Available LLM endpoints (mcp-rhoai cluster)
 
